@@ -9,7 +9,24 @@ def packet_callback(packet):
             src = packet[IP].src
             dst = packet[IP].dst
             proto = packet[IP].proto
-            print(f"📦 {src} -> {dst} | Protocol: {proto}")
+
+
+            #protocol number to name map 99% will be 1,6,17 added the extras cuz itd be cool if i saw them
+            protocol_names = {
+                1: "ICMP",
+                6: "TCP",
+                17: "UDP",
+                47: "GRE",
+                50: "ESP",
+                51: "AH",
+                132: "SCTP"
+            }
+
+            #get name or fallback to number if unknown
+            proto_name = protocol_names.get(proto, f"Unknown ({proto})")
+
+
+            print(f"📦 {src} -> {dst} | Protocol: {proto_name}")
             #print src, dstination and protocol of the packet
         except Exception as e:
             print(f"Error reading packet: {e}")
