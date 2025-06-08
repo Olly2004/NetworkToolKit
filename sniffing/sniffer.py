@@ -5,11 +5,15 @@ def packet_callback(packet):
     #called for each captured packet
     if IP in packet:
         #ignore non-IP packets
-        source = packet[IP].source
-        dest = packet[IP].dest
-        proto = packet[IP].proto
-        print(f"📦 {source} -> {dest} | Protocol: {proto}")
-        #print source, destination and protocol of the packet
+        try:
+            src = packet[IP].src
+            dst = packet[IP].dst
+            proto = packet[IP].proto
+            print(f"📦 {src} -> {dst} | Protocol: {proto}")
+            #print src, dstination and protocol of the packet
+        except Exception as e:
+            print(f"Error reading packet: {e}")
+
 
 print("Starting packet capture...")
 sniff(filter="ip", prn=packet_callback, store=False)
