@@ -13,6 +13,9 @@ import threading
 import os
 #filepathing
 
+selected = "ALL"
+#global variable so both functions can use
+
 
 def run_sniffer(output_box, batch=False):
     #function for running the sniffer function
@@ -33,6 +36,13 @@ def run_sniffer(output_box, batch=False):
         #build command to run sniffer.py
         if batch:
             cmd.append("--batch")
+
+        proto_map = {"TCP": "6", "UDP": "17"}
+        #map protocol names to numbers as sniffer.py expects numbers
+        if selected in proto_map:
+            cmd.extend(["--proto", proto_map[selected]])
+
+
 
         #run subprocess
         process = subprocess.Popen(
@@ -76,6 +86,9 @@ def launch_gui():
     sniff_btn_batch.pack(side=tk.LEFT, padx=10)
     #same for batch mode
 
+    tk.Button(root, text="Filters", command=lambda: NewWindow(root)).pack()
+    #button to open filters window
+
     output_box = ScrolledText(root, wrap=tk.WORD, font=("Courier", 10))
     output_box.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
     #scrollable text box for output
@@ -83,3 +96,28 @@ def launch_gui():
 
     root.mainloop()
     #start the GUI event loop (stays open until closed)
+
+
+def NewWindow(master):
+    #filter window for choosing protocol
+
+    top = tk.Toplevel(master)
+    top.title("Choose Protocol")
+
+    tk.Label(top, text="Select Protocol:").pack()
+
+    proto_var = tk.StringVar(value="ALL")
+    options = ["ALL", "TCP", "UDP"]
+    for opt in options:
+        tk.Radiobutton(top, text=opt, variable=proto_var, value=opt).pack(anchor='w')
+        #create each type of button
+
+    def save_and_close():
+        global selected
+        selected = proto_var.get()
+        print(f"Protocol selected: {selected}")
+        top.destroy()
+        #remove after use
+
+    tk.Button(top, text="Confirm", command=save_and_close).pack(pady=5)
+    #save and exit button just runs the function to change the global variable

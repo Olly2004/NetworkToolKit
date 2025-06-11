@@ -40,6 +40,7 @@ def packet_callback(packet):
     if IP in packet:
         #ignore non-IP packets
         try:
+
             src = packet[IP].src  
             #get source IP
             
@@ -48,6 +49,12 @@ def packet_callback(packet):
             
             proto = packet[IP].proto  
             #get protocol number from IP header
+
+            if args.proto is not None and proto != args.proto:
+                return  
+            #skip non-matching protocols
+
+
 
             packet_counts[proto] += 1  
             #count how many times each protocol appears
@@ -119,10 +126,13 @@ parser.add_argument('--batch', action='store_true', help='Show summary output in
 #action means it will be a boolean
 #help is the description shown when you run --help
 
+parser.add_argument('--proto', type=int, help='Filter by specific protocol number (e.g., 6 for TCP)')
+#new argument for filtering by protocol
+
 args = parser.parse_args()
 #parse the arguments
 
-print("🔍 Starting live packet summary (Ctrl+C to stop)...")
+print("Starting live packet summary...")
 sys.stdout.flush()  
 #intro message shows up in GUI too
 
