@@ -178,3 +178,5 @@ sniff(filter="ip or arp", prn=packet_callback, store=False)
 
 #sudo python3 sniffing/sniffer.py
 #sudo python3 sniffing/sniffer.py --batch
+
+#sudo python3 main.py
