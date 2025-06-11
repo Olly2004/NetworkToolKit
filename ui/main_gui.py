@@ -75,8 +75,55 @@ def run_sniffer(output_box, batch=False):
 
 
 
+
+
+
+
+
+def main_menu():
+    root = tk.Tk()
+    root.title("NetworkToolKit - Main Menu")
+    root.geometry("400x300")
+
+    title = tk.Label(root, text="NetworkToolKit", font=("Helvetica", 18, "bold"))
+    title.pack(pady=20)
+
+    tk.Button(root, text="Sniffers", width=20, height=2, command=lambda: [root.destroy(), launch_sniffer_tool_menu()]).pack(pady=10)
+    tk.Button(root, text="Port Scanner", width=20, height=2, command=lambda: print("Port Scanner coming soon")).pack(pady=10)
+    tk.Button(root, text="ARP Spoofer", width=20, height=2, command=lambda: print("Spoofer coming soon")).pack(pady=10)
+    #main menu as adding more tools
+    #new tools just print a message for now
+
+    root.mainloop()
+
+
+
+def launch_sniffer_tool_menu():
+    root = tk.Tk()
+    root.title("NetworkToolKit - Main Menu")
+    root.geometry("400x400")
+
+    tk.Label(root, text="Choose a Tool", font=("Helvetica", 16, "bold")).pack(pady=20)
+
+    tk.Button(root, text="Packet sniffer", width=20, height=2,
+              command=lambda: [root.destroy(), launch_packet_sniffer_gui()]).pack(pady=10)
+
+    tk.Button(root, text="DNS sniffer", width=20, height=2,
+              command=lambda: [root.destroy(), launch_DNS_sniffer_gui()]).pack(pady=10)
+
+    tk.Button(root, text="SNI sniffer", width=20, height=2,
+              command=lambda: [root.destroy(), launch_SNI_sniffer_gui()]).pack(pady=10)
+    
+    tk.Button(root, text="Back", command=lambda: [root.destroy(), main_menu()]).pack(pady=5)
+    #back button changing the function called to whatever i want to go back to
+
+
+    root.mainloop()
+
+
+
 #function for creating and launching the GUI
-def launch_sniffer_gui():
+def launch_packet_sniffer_gui():
     root = tk.Tk()
     #main SNIFFER window
 
@@ -99,8 +146,11 @@ def launch_sniffer_gui():
     sniff_btn_batch.pack(side=tk.LEFT, padx=10)
     #same for batch mode
 
-    tk.Button(root, text="Filters", command=lambda: NewWindow(root)).pack()
+    tk.Button(root, text="Filters", command=lambda: ProtocolSelector(root)).pack()
     #button to open filters window
+
+    tk.Button(root, text="Back", command=lambda: [root.destroy(), launch_sniffer_tool_menu()]).pack(pady=5)
+
 
     output_box = ScrolledText(root, wrap=tk.WORD, font=("Courier", 10))
     output_box.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
@@ -111,7 +161,9 @@ def launch_sniffer_gui():
     #start the GUI event loop (stays open until closed)
 
 
-def NewWindow(master):
+
+
+def ProtocolSelector(master):
     #filter window for choosing protocol
 
     top = tk.Toplevel(master)
@@ -135,18 +187,37 @@ def NewWindow(master):
     #save and exit button just runs the function to change the global variable
 
 
-def main_menu():
+def launch_DNS_sniffer_gui():
     root = tk.Tk()
-    root.title("NetworkToolKit - Main Menu")
-    root.geometry("400x300")
 
-    title = tk.Label(root, text="NetworkToolKit", font=("Helvetica", 18, "bold"))
-    title.pack(pady=20)
+    root.title("DNS sniffer")
+    root.geometry("700x500")
 
-    tk.Button(root, text="Packet Sniffer", width=20, height=2, command=lambda: [root.destroy(), launch_sniffer_gui()]).pack(pady=10)
-    tk.Button(root, text="Port Scanner", width=20, height=2, command=lambda: print("Port Scanner coming soon")).pack(pady=10)
-    tk.Button(root, text="ARP Spoof Detector", width=20, height=2, command=lambda: print("Spoof Detector coming soon")).pack(pady=10)
-    #main menu as adding more tools
-    #new tools just print a message for now
+    title = tk.Label(root, text="DNS sniffer", font=("Helvetica", 16, "bold"))
+    title.pack(pady=10)
+    #create and place the title label
 
-    root.mainloop()
+    btn_frame = tk.Frame(root)
+    btn_frame.pack(pady=5)
+    #frame for buttons
+
+    tk.Button(root, text="Back", command=lambda: [root.destroy(), launch_sniffer_tool_menu()]).pack(pady=5)
+
+
+
+def launch_SNI_sniffer_gui():
+    root = tk.Tk()
+
+    root.title("SNI sniffer")
+    root.geometry("700x500")
+
+    title = tk.Label(root, text="SNI sniffer", font=("Helvetica", 16, "bold"))
+    title.pack(pady=10)
+    #create and place the title label
+
+    btn_frame = tk.Frame(root)
+    btn_frame.pack(pady=5)
+    #frame for buttons
+
+    tk.Button(root, text="Back", command=lambda: [root.destroy(), launch_sniffer_tool_menu()]).pack(pady=5)
+
