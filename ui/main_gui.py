@@ -31,16 +31,16 @@ def run_sniffer(output_box, batch=False):
     def sniff_task():
         #runs the sniffer script in a separate thread
         
-        sniffer_path = os.path.join(os.path.dirname(__file__), "..", "sniffing", "sniffer.py")
-        #build full path to sniffer.py regardless of where script is run
+        sniffer_path = os.path.join(os.path.dirname(__file__), "..", "sniffing", "packetsniffer.py")
+        #build full path to packetsniffer.py regardless of where script is run
 
         cmd = ["python3", sniffer_path]
-        #build command to run sniffer.py
+        #build command to run packetsniffer.py
         if batch:
             cmd.append("--batch")
 
         proto_map = {"TCP": "6", "UDP": "17", "ICMP": "1", "ARP": "2054"}
-        #map protocol names to numbers as sniffer.py expects numbers
+        #map protocol names to numbers as packetsniffer.py expects numbers
         selected_nums = [proto_map[p] for p in selected if p in proto_map]
         if selected_nums:
             cmd.append("--proto")
