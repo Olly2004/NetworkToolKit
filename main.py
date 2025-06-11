@@ -1,4 +1,7 @@
-from ui.main_gui import launch_gui
+from ui.main_gui import main_menu
+#can run it now
 
 if __name__ == "__main__":
-    launch_gui()
+    #stops importing this file in other scripts
+    #and runs the GUI
+    main_menu()

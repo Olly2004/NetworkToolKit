@@ -72,10 +72,13 @@ def run_sniffer(output_box, batch=False):
     threading.Thread(target=sniff_task, daemon=True).start()
     #daemon=True means thread will exit when main program exits
 
+
+
+
 #function for creating and launching the GUI
-def launch_gui():
+def launch_sniffer_gui():
     root = tk.Tk()
-    #main window
+    #main SNIFFER window
 
     root.title("NetworkToolKit")
     root.geometry("700x500")
@@ -130,3 +133,20 @@ def NewWindow(master):
 
     tk.Button(top, text="Confirm", command=save_and_close).pack(pady=5)
     #save and exit button just runs the function to change the global variable
+
+
+def main_menu():
+    root = tk.Tk()
+    root.title("NetworkToolKit - Main Menu")
+    root.geometry("400x300")
+
+    title = tk.Label(root, text="NetworkToolKit", font=("Helvetica", 18, "bold"))
+    title.pack(pady=20)
+
+    tk.Button(root, text="Packet Sniffer", width=20, height=2, command=lambda: [root.destroy(), launch_sniffer_gui()]).pack(pady=10)
+    tk.Button(root, text="Port Scanner", width=20, height=2, command=lambda: print("Port Scanner coming soon")).pack(pady=10)
+    tk.Button(root, text="ARP Spoof Detector", width=20, height=2, command=lambda: print("Spoof Detector coming soon")).pack(pady=10)
+    #main menu as adding more tools
+    #new tools just print a message for now
+
+    root.mainloop()
