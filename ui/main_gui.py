@@ -13,8 +13,10 @@ import threading
 import os
 #filepathing
 
-selected = "ALL"
+selected = []
 #global variable so both functions can use
+#stores them now as ["TCP", "UDP", "ICMP", "ARP"]
+
 
 
 def run_sniffer(output_box, batch=False):
@@ -37,10 +39,18 @@ def run_sniffer(output_box, batch=False):
         if batch:
             cmd.append("--batch")
 
-        proto_map = {"TCP": "6", "UDP": "17"}
+        proto_map = {"TCP": "6", "UDP": "17", "ICMP": "1", "ARP": "2054"}
         #map protocol names to numbers as sniffer.py expects numbers
-        if selected in proto_map:
-            cmd.extend(["--proto", proto_map[selected]])
+        selected_nums = [proto_map[p] for p in selected if p in proto_map]
+        if selected_nums:
+            cmd.append("--proto")
+            cmd.extend(selected_nums)
+            #adds a protocol flag for each selected
+            #multiple protocols can be selected
+            #GUI sends flags like --proto 6 --proto 17
+            #but we want --proto 6 17
+            #so we append the numbers to the same flag
+
 
 
 
@@ -106,15 +116,14 @@ def NewWindow(master):
 
     tk.Label(top, text="Select Protocol:").pack()
 
-    proto_var = tk.StringVar(value="ALL")
-    options = ["ALL", "TCP", "UDP"]
-    for opt in options:
-        tk.Radiobutton(top, text=opt, variable=proto_var, value=opt).pack(anchor='w')
-        #create each type of button
+    proto_vars = {proto: tk.BooleanVar() for proto in ["TCP", "UDP", "ICMP", "ARP"]}
+    for proto, var in proto_vars.items():
+        tk.Checkbutton(top, text=proto, variable=var).pack(anchor='w')
+        #check button instead for multiple selection
 
     def save_and_close():
         global selected
-        selected = proto_var.get()
+        selected = [proto for proto, var in proto_vars.items() if var.get()]
         print(f"Protocol selected: {selected}")
         top.destroy()
         #remove after use
