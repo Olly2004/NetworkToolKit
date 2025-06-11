@@ -7,6 +7,9 @@ from collections import Counter
 import argparse
 #used to parse --batch flag from command line
 
+import sys  
+#lets us flush output immediately for GUI subprocesses
+
 packet_counts = Counter()
 #stores how many packets per protocol
 
@@ -17,6 +20,17 @@ ip_counts = Counter()
 
 last_print_time = time.time()
 #used to time the summaries
+
+#clean up so its shared by both functions instead of redefining every time
+protocol_names = {
+    1: "ICMP",
+    6: "TCP",
+    17: "UDP",
+    47: "GRE",
+    50: "ESP",
+    51: "AH",
+    132: "SCTP"
+}
 
 #called for each captured packet
 def packet_callback(packet):
@@ -46,20 +60,15 @@ def packet_callback(packet):
 
             if not args.batch:
                 #only print live if not in batch mode
-                protocol_names = {
-                    1: "ICMP",
-                    6: "TCP",
-                    17: "UDP",
-                    47: "GRE",
-                    50: "ESP",
-                    51: "AH",
-                    132: "SCTP"
-                }
                 proto_name = protocol_names.get(proto, f"Unknown ({proto})")
                 print(f" {src} -> {dst} | Protocol: {proto_name}")
+                sys.stdout.flush()  
+                #ensures this prints immediately in GUI
 
         except Exception as e:
             print(f"Error reading packet: {e}")  #if something breaks (weird packet or whatever)
+            sys.stdout.flush()  
+            #flush even errors to show in GUI
 
     #print summary once per second
     if args.batch:
@@ -70,17 +79,6 @@ def packet_callback(packet):
 
 #prints one-line summary every second
 def print_summary():
-    #protocol number to name map 99% will be 1,6,17 added the extras cuz itd be cool if i saw them
-    protocol_names = {
-        1: "ICMP",
-        6: "TCP",
-        17: "UDP",
-        47: "GRE",
-        50: "ESP",
-        51: "AH",
-        132: "SCTP"
-    }
-
     summary = " " 
     #initialize summary string
 
@@ -103,6 +101,8 @@ def print_summary():
     #convert to string list
 
     print(f"{summary} | Top IPs: {ip_str}")  #final output line
+    sys.stdout.flush()  
+    #so GUI shows batch output in real time
 
     #reset for the next second
     packet_counts.clear()
@@ -123,6 +123,9 @@ args = parser.parse_args()
 #parse the arguments
 
 print("🔍 Starting live packet summary (Ctrl+C to stop)...")
+sys.stdout.flush()  
+#intro message shows up in GUI too
+
 sniff(filter="ip", prn=packet_callback, store=False)
 #only capture IP packets
 #call the function when a packet is captured
