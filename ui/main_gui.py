@@ -19,10 +19,17 @@ selected = []
 
 
 stop_thread = threading.Event()
-#this is for stopping the things
+#this is and object used for stopping the things
+
+#threading.event makes a shared on/off flag for threads
+#stop_thread.set turn flag on gonna use to stop them
+#stop_thread.clear turns flag off
+#stop_thread.is_set used to check if asked to stop
 
 def stop_sniffer():
     stop_thread.set()
+
+
 
 
 
