@@ -194,6 +194,26 @@ def Run_DNS(output_box, iface):
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #OK THE PREMISE OF HOW WE ARE DOING THIS IS
 #APP IS AN INSTANCE OF MainApp (this)
 #MainApp then creates INSTANCES VIA 'frame = MainMenu(self)'
@@ -282,17 +302,49 @@ class MainMenu(tk.Frame):
         #AND MASTER REFERS TO THE APP INSTANCE
 
         title = tk.Label(self, text="NetworkToolKit", font=("Helvetica", 18, "bold"))
-        title.pack(pady=20)
+        title.pack(pady=100)
 
         tk.Button(self, text="Sniffers", width=20, height=2,
-                  command=lambda: master.show_frame(SnifferToolMenu)).pack(pady=10)
+                  command=lambda: master.show_frame(SnifferToolMenu)).pack(pady=30)
 
         tk.Button(self, text="Port Scanner", width=20, height=2,
-                  command=lambda: print("Port Scanner coming soon")).pack(pady=10)
+                  command=lambda: print("Port Scanner coming soon")).pack(pady=30)
 
-        tk.Button(self, text="ARP Spoofer", width=20, height=2,
-                  command=lambda: print("Spoofer coming soon")).pack(pady=10)
+
+
+        def toggle_spoof_widgets():
+            if arp_var.get():
+                spoofed_label.pack()
+                spoofed_entry.pack(pady=5)
+                target_label.pack()
+                target_entry.pack(pady=5)
+                start_button.pack(pady=5)
+                stop_button.pack()
+                #display if true
+            else:
+                spoofed_label.pack_forget()
+                spoofed_entry.pack_forget()
+                target_label.pack_forget()
+                target_entry.pack_forget()
+                start_button.pack_forget()
+                stop_button.pack_forget()
+                #undisplay if not
+
+        arp_var = tk.BooleanVar()
+        #check button expects something like a booleanvar so yeah
+        tk.Checkbutton(self, text="Enable ARP Spoofing", variable=arp_var,
+                    command=toggle_spoof_widgets).pack(pady=30)
+        #checks if its ticked or not then runs the toggle
         
+
+        spoofed_label = tk.Label(self, text="Spoofed IP (pretend to be):")
+        spoofed_entry = tk.Entry(self)
+
+        target_label = tk.Label(self, text="Target IP (victim):")
+        target_entry = tk.Entry(self)
+
+        start_button = tk.Button(self, text="Start Spoofing")
+        stop_button = tk.Button(self, text="Stop Spoofing")
 
 
 
