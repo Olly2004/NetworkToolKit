@@ -52,3 +52,5 @@ port 80 (HTTP) SNI sniffing this will be none encrypted id assume and get a lot 
 DNS adding (already have the logic for it ive done something similar before)
 
 ARP spoof (again already made one so need to implement it here)
+
+ARP spoofing could be implemented WITH SNI sniffing therefore capturing someone elses NONE ECH data
