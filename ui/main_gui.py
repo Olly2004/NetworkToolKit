@@ -20,7 +20,8 @@ selected = []
 
 stop_packet_sniffer = threading.Event()
 stop_sni_sniffer = threading.Event()
-#make one for CURRENT BOTH
+stop_dns_sniffer = threading.Event()
+#make one for CURRENT TRIPLE
 #this is and object used for stopping the things
 
 #threading.event makes a shared on/off flag for threads
@@ -34,6 +35,10 @@ def stop_packet_sniffer_func():
 
 def stop_sni_sniffer_func():
     stop_sni_sniffer.set()
+
+
+def stop_dns_sniffer_func():
+    stop_dns_sniffer.set()
 
     #this will stop all threads so id have to make seperate fucntions for each thread being used
 
@@ -142,6 +147,48 @@ def Run_SNI(output_box):
     #threads again as SNI is also no end condition
     threading.Thread(target=SNI_task, daemon=True).start()
 
+
+
+def Run_DNS(output_box, iface):
+
+    output_box.delete(1.0, tk.END)
+
+    stop_dns_sniffer.clear()
+
+
+    def DNS_task():
+
+        #this will be very similar to the sniff)task function
+        DNS_path = os.path.join(os.path.dirname(__file__), "..", "sniffing", "DNSsniffer.py")
+        
+        
+
+        cmd = ["python3", DNS_path, iface]
+        #iface is the second argument so [1] will access it
+
+        process = subprocess.Popen(
+            cmd, #command to run
+            stdout=subprocess.PIPE, #capture output
+            stderr=subprocess.STDOUT, #captures errors too
+            text=True #string output instead of bytes
+        )
+        #copied from run_sniffer function but theres no modifiction to cmd as there is no batch or proto flags
+        #copied anc changed from sni
+
+        for line in process.stdout:
+            if stop_dns_sniffer.is_set():
+                output_box.insert(tk.END, "Stopping...\n")
+                output_box.see(tk.END)
+                process.terminate()
+                #stop the thread/process if called
+                break
+            output_box.insert(tk.END, line)
+            output_box.see(tk.END)
+            #insert line into output box and scroll to end auto
+
+    print("debug thread started")
+    #threads again as SNI is also no end condition
+    threading.Thread(target=DNS_task, daemon=True).start()
 
 
 
@@ -314,17 +361,36 @@ class DNSSnifferGUI(tk.Frame):
     def __init__(self, master):
         super().__init__(master)
 
-        #same here when i fill it in with my DNS logic i have in another file
+        title = tk.Label(self, text="DNS sniffer", font=("Helvetica", 16, "bold"))
+        title.pack(pady=10)
+
         btn_frame = tk.Frame(self)
         btn_frame.pack(pady=5)
 
-        title = tk.Label(self, text="DNS sniffer", font=("Helvetica", 16, "bold"))
-        title.pack(pady=10)
+        self.output_box = ScrolledText(self, wrap=tk.WORD, font=("Courier", 10))
+        self.output_box.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+
+        SNI_btn = tk.Button(btn_frame, text="Run DNS sniffer",
+                                   command=lambda: Run_DNS(self.output_box, self.iface_entry.get())
+)
+        SNI_btn.pack(side=tk.LEFT, padx=10)
+
+
+
+        #INTERFACE FOR THE ROUTER NAME THING
+        iface_frame = tk.Frame(self)
+        iface_frame.pack(pady=5)
+
+        tk.Label(iface_frame, text="Interface:").pack(side=tk.LEFT)
+        self.iface_entry = tk.Entry(iface_frame)
+        self.iface_entry.pack(side=tk.LEFT)
+        self.iface_entry.insert(0, "wlp2s0")  
+        #default value
 
 
         tk.Button(self, text="Back", command=lambda: master.show_frame(SnifferToolMenu)).pack(pady=5)
 
-        tk.Button(btn_frame, text="Stop Sniffing", command=stop_sni_sniffer_func).pack(side=tk.LEFT, padx=10)
+        tk.Button(btn_frame, text="Stop Sniffing", command=stop_dns_sniffer_func).pack(side=tk.LEFT, padx=10)
 
 
 
