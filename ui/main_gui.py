@@ -110,7 +110,7 @@ class MainApp(tk.Tk):
         for page in (MainMenu, SnifferToolMenu, PacketSnifferGUI, DNSSnifferGUI, SNISnifferGUI):
             frame = page(self)
             self.frames[page] = frame
-            frame.grid(row=0, column=0, sticky="nsew")
+            frame.pack(fill="both", expand=True)
             #creates each frame and adds it to the frames dictionary
 
         self.show_frame(MainMenu)
@@ -124,11 +124,12 @@ class MainApp(tk.Tk):
         #method inside of MainApp
         #need access to the frame
 
-        frame = self.frames[frame_class]
-        #grabbing the frame(instance) from the frames dictionary
-        frame.tkraise()
-        #makes frame the topmost frame
-        #so it is visible and the others are hidden
+        #hide all frames
+        for frame in self.frames.values():
+            frame.pack_forget()
+
+        #show the requested frame
+        self.frames[frame_class].pack(fill="both", expand=True)
 
 
 #mainApp is the main window
