@@ -73,6 +73,39 @@ def run_sniffer(output_box, batch=False):
     #daemon=True means thread will exit when main program exits
 
 
+def Run_SNI(output_box):
+
+    output_box.delete(1.0, tk.END)
+
+    def SNI_task():
+
+        #this will be very similar to the sniff)task function
+        SNI_path = os.path.join(os.path.dirname(__file__), "..", "sniffing", "SNIsniffer.py")
+        
+
+        cmd = ["python3", SNI_path]
+
+        process = subprocess.Popen(
+            cmd, #command to run
+            stdout=subprocess.PIPE, #capture output
+            stderr=subprocess.STDOUT, #captures errors too
+            text=True #string output instead of bytes
+        )
+        #copied from run_sniffer function but theres no modifiction to cmd as there is no batch or proto flags
+
+        for line in process.stdout:
+            output_box.insert(tk.END, line)
+            output_box.see(tk.END)
+            #insert line into output box and scroll to end auto
+
+    print("debug thread started")
+    #threads again as SNI is also no end condition
+    threading.Thread(target=SNI_task, daemon=True).start()
+
+
+
+
+
 
 #OK THE PREMISE OF HOW WE ARE DOING THIS IS
 #APP IS AN INSTANCE OF MainApp (this)
@@ -237,6 +270,8 @@ class DNSSnifferGUI(tk.Frame):
         super().__init__(master)
 
         #same here when i fill it in with my DNS logic i have in another file
+        btn_frame = tk.Frame(self)
+        btn_frame.pack(pady=5)
 
         title = tk.Label(self, text="DNS sniffer", font=("Helvetica", 16, "bold"))
         title.pack(pady=10)
@@ -252,6 +287,16 @@ class SNISnifferGUI(tk.Frame):
 
         title = tk.Label(self, text="SNI sniffer", font=("Helvetica", 16, "bold"))
         title.pack(pady=10)
+
+        btn_frame = tk.Frame(self)
+        btn_frame.pack(pady=5)
+
+        self.output_box = ScrolledText(self, wrap=tk.WORD, font=("Courier", 10))
+        self.output_box.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+
+        SNI_btn = tk.Button(btn_frame, text="Run SNI sniffer",
+                                   command=lambda: Run_SNI(self.output_box))
+        SNI_btn.pack(side=tk.LEFT, padx=10)
 
         #same as DNS
 

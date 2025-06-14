@@ -2,48 +2,53 @@
 Cybersecurity + networking toolkit: includes live packet sniffing, port scanning, and ARP spoofing/detection. Built in Python with real-time analysis and graphs.
 
 
-ok refreshed current new readme
+ok refreshed current new readme AGAIN
 
-currently is just a packet sniffer with a GUI and options on filters
-
-there are buttons for live outputs or batch outputs with top IPs shown 
-also a filter of protocol only TCP,UDP right now easy to add mroe but pointless right now
+where we at
 
 run with
 sudo python3 main.py
 
-starts the GUI and lets you go with it
+so packet sniffer is working 
 
-gonna expand this sniffer more then add more things to the toolkit as a whole then probabyl come back to sniffer for more improvements
+can detect various (not all) packets easy to add but didnt want to overwhelm
+will revisit and add to it with more filters and packet types and hopefully clikc packets to view more info
 
+GUI is looking good im using OOP
+to switch between them with instances within instances therefore including masters
 
-ok new read me next plays for the sniffer are:
+swapped it to a framepack instead of grid as that makes more sense for me now
 
-inspection window so you can clikc a packet for more info maybe time and other things to not clutter the current UI
+SO SNI i will do DNS soon already got the logic down for that
 
-export as a pcap could be cool NO idea how id go about it
+SNI i have done and complete on port 443 (HTTPS/TLS/TCP)
+so this works ONLY if the place im visiting on my laptop HAS NOT got ECH (encrypted client hello)
+as the client hello is what im unpacking
 
-time filtering 
+this makes it very difficult for an SNI sniff to work almost impossible im assuming BUT ive thought of potential work arounds
 
-DNS resolution maybe could sound cool
+first i thought why not turn ECH on and off for a website get the TLS structure for both
 
-
-next tool instead could be 
-
-port scanner (aldready made one)
-
-ARP spoofing device (already made one)
-
-device discovery
-
-wifi info grabber
-
-firewall tester MAYBE just look at it
-
-i just want to make a networking MULTI TOOL
-
-but first i will make a new GUI window so you select sniffer before sniffing so you can select other things when i add them
+and then make mappings and so on
+BUT teh encrytption will prolly have and IV so thats almost impossible
 
 
+BUT NEW IDEA the idea of 
+cant see the letter but can get the shape and feel of the envelope
+so the content like SNI and extensions will be encrypted BUT the sizes, amount of extensions and other things wont be
+so then i can try my previous idea with this as the mapping/blueprint/fingerprint
 
-testing testing testing 
+
+features to come:
+
+detailed packets on packet sniffer
+
+maybe graphical packets could be cool to learn graphs better in python
+
+more packet filters and more things around there/ proto types
+
+port 80 (HTTP) SNI sniffing this will be none encrypted id assume and get a lot more info but nothing is really HTTP
+
+DNS adding (already have the logic for it ive done something similar before)
+
+ARP spoof (again already made one so need to implement it here)
