@@ -18,12 +18,21 @@ selected = []
 #stores them now as ["TCP", "UDP", "ICMP", "ARP"]
 
 
+stop_thread = threading.Event()
+#this is for stopping the things
+
+def stop_sniffer():
+    stop_thread.set()
+
+
 
 def run_sniffer(output_box, batch=False):
     #function for running the sniffer function
     #running it as a separate thread so GUI doesn't freeze
     #because the sniffer doesnt have an exit condition
     #therefore GUI would freeze if we ran it directly
+
+    stop_thread.clear()
 
     output_box.delete(1.0, tk.END)
     #clear output box BEFORE new running
@@ -64,8 +73,13 @@ def run_sniffer(output_box, batch=False):
 
         #stream output line by line
         for line in process.stdout:
+            if stop_thread.is_set():
+                #same here
+                process.terminate()
+                break
             output_box.insert(tk.END, line)
             output_box.see(tk.END)
+
             #insert line into output box and scroll to end auto
 
     #run in new thread so UI doesn’t freeze
@@ -76,6 +90,9 @@ def run_sniffer(output_box, batch=False):
 def Run_SNI(output_box):
 
     output_box.delete(1.0, tk.END)
+
+    stop_thread.clear()
+
 
     def SNI_task():
 
@@ -94,6 +111,10 @@ def Run_SNI(output_box):
         #copied from run_sniffer function but theres no modifiction to cmd as there is no batch or proto flags
 
         for line in process.stdout:
+            if stop_thread.is_set():
+                process.terminate()
+                #stop the thread/process if called
+                break
             output_box.insert(tk.END, line)
             output_box.see(tk.END)
             #insert line into output box and scroll to end auto
@@ -205,6 +226,8 @@ class MainMenu(tk.Frame):
 
         tk.Button(self, text="ARP Spoofer", width=20, height=2,
                   command=lambda: print("Spoofer coming soon")).pack(pady=10)
+        
+
 
 
 
@@ -260,6 +283,9 @@ class PacketSnifferGUI(tk.Frame):
         #button to open protocol selector with self
         tk.Button(self, text="Back", command=lambda: master.show_frame(SnifferToolMenu)).pack(pady=5)
 
+        tk.Button(btn_frame, text="Stop Sniffing", command=stop_sniffer).pack(side=tk.LEFT, padx=10)
+
+
 
 
 
@@ -278,6 +304,9 @@ class DNSSnifferGUI(tk.Frame):
 
 
         tk.Button(self, text="Back", command=lambda: master.show_frame(SnifferToolMenu)).pack(pady=5)
+
+        tk.Button(btn_frame, text="Stop Sniffing", command=stop_sniffer).pack(side=tk.LEFT, padx=10)
+
 
 
 
@@ -301,6 +330,9 @@ class SNISnifferGUI(tk.Frame):
         #same as DNS
 
         tk.Button(self, text="Back", command=lambda: master.show_frame(SnifferToolMenu)).pack(pady=5)
+
+        tk.Button(btn_frame, text="Stop Sniffing", command=stop_sniffer).pack(side=tk.LEFT, padx=10)
+
 
 
 
