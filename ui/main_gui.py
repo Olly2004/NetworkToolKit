@@ -18,7 +18,9 @@ selected = []
 #stores them now as ["TCP", "UDP", "ICMP", "ARP"]
 
 
-stop_thread = threading.Event()
+stop_packet_sniffer = threading.Event()
+stop_sni_sniffer = threading.Event()
+#make one for CURRENT BOTH
 #this is and object used for stopping the things
 
 #threading.event makes a shared on/off flag for threads
@@ -26,8 +28,14 @@ stop_thread = threading.Event()
 #stop_thread.clear turns flag off
 #stop_thread.is_set used to check if asked to stop
 
-def stop_sniffer():
-    stop_thread.set()
+def stop_packet_sniffer_func():
+    stop_packet_sniffer.set()
+
+
+def stop_sni_sniffer_func():
+    stop_sni_sniffer.set()
+
+    #this will stop all threads so id have to make seperate fucntions for each thread being used
 
 
 
@@ -39,7 +47,7 @@ def run_sniffer(output_box, batch=False):
     #because the sniffer doesnt have an exit condition
     #therefore GUI would freeze if we ran it directly
 
-    stop_thread.clear()
+    stop_packet_sniffer.clear()
 
     output_box.delete(1.0, tk.END)
     #clear output box BEFORE new running
@@ -80,7 +88,9 @@ def run_sniffer(output_box, batch=False):
 
         #stream output line by line
         for line in process.stdout:
-            if stop_thread.is_set():
+            if stop_packet_sniffer.is_set():
+                output_box.insert(tk.END, "Stopping...\n")
+                output_box.see(tk.END)
                 #same here
                 process.terminate()
                 break
@@ -98,7 +108,7 @@ def Run_SNI(output_box):
 
     output_box.delete(1.0, tk.END)
 
-    stop_thread.clear()
+    stop_sni_sniffer.clear()
 
 
     def SNI_task():
@@ -118,7 +128,9 @@ def Run_SNI(output_box):
         #copied from run_sniffer function but theres no modifiction to cmd as there is no batch or proto flags
 
         for line in process.stdout:
-            if stop_thread.is_set():
+            if stop_sni_sniffer.is_set():
+                output_box.insert(tk.END, "Stopping...\n")
+                output_box.see(tk.END)
                 process.terminate()
                 #stop the thread/process if called
                 break
@@ -290,7 +302,7 @@ class PacketSnifferGUI(tk.Frame):
         #button to open protocol selector with self
         tk.Button(self, text="Back", command=lambda: master.show_frame(SnifferToolMenu)).pack(pady=5)
 
-        tk.Button(btn_frame, text="Stop Sniffing", command=stop_sniffer).pack(side=tk.LEFT, padx=10)
+        tk.Button(btn_frame, text="Stop Sniffing", command=stop_packet_sniffer_func).pack(side=tk.LEFT, padx=10)
 
 
 
@@ -312,7 +324,7 @@ class DNSSnifferGUI(tk.Frame):
 
         tk.Button(self, text="Back", command=lambda: master.show_frame(SnifferToolMenu)).pack(pady=5)
 
-        tk.Button(btn_frame, text="Stop Sniffing", command=stop_sniffer).pack(side=tk.LEFT, padx=10)
+        tk.Button(btn_frame, text="Stop Sniffing", command=stop_sni_sniffer_func).pack(side=tk.LEFT, padx=10)
 
 
 
@@ -338,7 +350,7 @@ class SNISnifferGUI(tk.Frame):
 
         tk.Button(self, text="Back", command=lambda: master.show_frame(SnifferToolMenu)).pack(pady=5)
 
-        tk.Button(btn_frame, text="Stop Sniffing", command=stop_sniffer).pack(side=tk.LEFT, padx=10)
+        tk.Button(btn_frame, text="Stop Sniffing", command=stop_sni_sniffer_func).pack(side=tk.LEFT, padx=10)
 
 
 
