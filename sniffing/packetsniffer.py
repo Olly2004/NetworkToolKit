@@ -26,15 +26,29 @@ last_print_time = time.time()
 #clean up so its shared by both functions instead of redefining every time
 protocol_names = {
     1: "ICMP",
+    2: "IGMP",
+    4: "IPv4",
     6: "TCP",
+    8: "EGP",
+    9: "IGP",
     17: "UDP",
+    41: "IPv6",
+    43: "IPv6-Route",
+    44: "IPv6-Frag",
     47: "GRE",
     50: "ESP",
     51: "AH",
+    58: "ICMPv6",
+    88: "EIGRP",
+    89: "OSPF",
+    103: "PIM",
+    112: "VRRP",
+    115: "L2TP",
     132: "SCTP",
-    2054: "ARP"
-    #add more protocols as needed
+    2054: "ARP"  
 }
+#found a bit list of more protocols with their numbers so will be implementing more in here
+
 
 #called for each captured packet
 def packet_callback(packet):
