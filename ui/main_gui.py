@@ -18,10 +18,19 @@ selected = []
 #stores them now as ["TCP", "UDP", "ICMP", "ARP"]
 
 
+spoof_process = None
+#THIS TRACKS THE SPOOF
+
+current_spoofed_ip = None
+current_target_ip = None
+#also tracs it
+
+
 stop_packet_sniffer = threading.Event()
 stop_sni_sniffer = threading.Event()
 stop_dns_sniffer = threading.Event()
-#make one for CURRENT TRIPLE
+stop_spoofer = threading.Event()
+#make one for CURRENT QUAD
 #this is and object used for stopping the things
 
 #threading.event makes a shared on/off flag for threads
@@ -41,6 +50,30 @@ def stop_dns_sniffer_func():
     stop_dns_sniffer.set()
 
     #this will stop all threads so id have to make seperate fucntions for each thread being used
+
+
+
+def stop_spoof_func():
+    global spoof_process
+    stop_spoofer.set()
+    #sets the threading event from above
+
+    if spoof_process:
+        spoof_process.terminate()
+        spoof_process = None
+        #if its running terminate it
+
+    if current_spoofed_ip and current_target_ip:
+        #only do it if have both IPs are valid 
+        spoof_path = os.path.join(os.path.dirname(__file__), "..", "spoofing", "spoofer.py")
+        subprocess.run([
+            "python3", spoof_path, "--restore",
+            current_spoofed_ip, current_target_ip
+        ])
+        #run it with the restoreing args so router IP 
+
+
+    
 
 
 
@@ -192,6 +225,26 @@ def Run_DNS(output_box, iface):
 
 
 
+def start_spoofer(spoofed_entry, target_entry):
+    global spoof_process, current_spoofed_ip, current_target_ip
+
+    spoofed_ip = spoofed_entry.get()
+    target_ip = target_entry.get()
+    #get the arguemnts and pass
+
+    if spoofed_ip and target_ip:
+        current_spoofed_ip = spoofed_ip
+        current_target_ip = target_ip
+
+        spoof_path = os.path.join(os.path.dirname(__file__), "..", "spoofing", "spoofer.py")
+
+        spoof_process = subprocess.Popen(["python3", spoof_path, spoofed_ip, target_ip])
+        #pass them through as arguments
+
+
+    
+
+
 
 
 
@@ -339,12 +392,19 @@ class MainMenu(tk.Frame):
 
         spoofed_label = tk.Label(self, text="Spoofed IP (pretend to be):")
         spoofed_entry = tk.Entry(self)
+        spoofed_entry.insert(0, "192.168.1.")  
+        #pre-fill spoofed IP
 
         target_label = tk.Label(self, text="Target IP (victim):")
         target_entry = tk.Entry(self)
+        target_entry.insert(0, "192.168.1.")
 
-        start_button = tk.Button(self, text="Start Spoofing")
-        stop_button = tk.Button(self, text="Stop Spoofing")
+        start_button = tk.Button(self, text="Start Spoofing", command = lambda: start_spoofer(spoofed_entry, target_entry))
+
+        stop_button = tk.Button(self, text="Stop Spoofing", command= stop_spoof_func)
+
+
+
 
 
 

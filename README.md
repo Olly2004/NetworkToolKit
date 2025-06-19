@@ -19,7 +19,7 @@ to switch between them with instances within instances therefore including maste
 
 swapped it to a framepack instead of grid as that makes more sense for me now
 
-SO SNI i will do DNS soon already got the logic down for that
+SO SNI i will do DNS soon (done it) already got the logic down for that
 
 SNI i have done and complete on port 443 (HTTPS/TLS/TCP)
 so this works ONLY if the place im visiting on my laptop HAS NOT got ECH (encrypted client hello)
@@ -38,6 +38,14 @@ cant see the letter but can get the shape and feel of the envelope
 so the content like SNI and extensions will be encrypted BUT the sizes, amount of extensions and other things wont be
 so then i can try my previous idea with this as the mapping/blueprint/fingerprint
 
+OK NEW THING JUST DISCOVERED? I NEED TO COMMIT I HAVENT IN AGES ALAS
+its called HTTPS stripping i think the idea is when someone googles for example
+http://example.com they will be auto sent to httpS://example.com
+SO i can apparently (will need to do some research) STOP this from happening therefore keeping it unencrypted?
+done a BIT of research and im egtting the idea is a proxy sort of thing?
+where i act as the HTTPS??? i shall see
+
+
 
 features to come:
 
@@ -49,8 +57,13 @@ more packet filters and more things around there/ proto types
 
 port 80 (HTTP) SNI sniffing this will be none encrypted id assume and get a lot more info but nothing is really HTTP
 
-DNS adding (already have the logic for it ive done something similar before)
+HTTPS stripping
 
-ARP spoof (again already made one so need to implement it here)
+possibly packet injection or just the idea of it
 
-ARP spoofing could be implemented WITH SNI sniffing therefore capturing someone elses NONE ECH data
+stream decryption HOWEVER i believe i need a certificate for this and thats cool but i cant ACC do anything with it very controlled environment
+
+BUT FIRST I want to add a button make my sniffers only show spoofed packets (if im spoofing ofc)
+
+
+
