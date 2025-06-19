@@ -64,7 +64,20 @@ def packet_callback(packet):
             
             dst = packet[IP].dst  
             #get destination IP
+
+            if args.victim and src != args.victim and dst != args.victim:
+                return
+            #if victim mode on and its not from/for them get rid of it
+            #basically dumbed down is the core of the victim only mode
+            #check arg is set
+            #then check if neither the src or dst is the victim
+            #return it
+            #made a lot easier since kernel handles the src and dst before i even see the packet
+            #so here the src and dst would be my phone for eg
+            #BUT TECHINICALLY its my laptop for both cuz of the spoof
+            #BUT before i even see that my kernel has dealt with it
             
+
             proto = packet[IP].proto  
             #get protocol number from IP header
 
@@ -104,6 +117,12 @@ def packet_callback(packet):
 
             src = packet[ARP].psrc
             dst = packet[ARP].pdst
+
+            if args.victim and src != args.victim and dst != args.victim:
+                return
+            #same for ARP
+
+
 
             if args.proto is not None and proto not in args.proto:
                 return
@@ -174,6 +193,9 @@ parser.add_argument('--batch', action='store_true', help='Show summary output in
 parser.add_argument('--proto', type=int, nargs='*', help='Filter by specific protocol number (e.g., 6 for TCP)')
 #new argument for filtering by protocol
 #nargs means it can take multiple values (like 6 17 for TCP and UDP)
+
+parser.add_argument('--victim', help='Only capture packets to/from this IP')
+#new arg for the victim only
 
 args = parser.parse_args()
 #parse the arguments

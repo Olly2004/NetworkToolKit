@@ -1,5 +1,18 @@
 from scapy.all import sniff, DNSQR, DNSRR, IP, UDP, DNS
 import sys
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument("iface", help="Interface to sniff on")
+#has iface as DNS specifies the interface as thats how ive made it but SNI just uses the primary one and guesses
+
+parser.add_argument("--victim", help="Only capture DNS packets to/from this IP")
+args = parser.parse_args()
+
+iface = args.iface
+victim_ip = args.victim
+#all thsi for adding args to DNS cuz i want victim only just setting up args basically
+
 
 def process_packet(packet):
     if packet.haslayer(DNS) and packet.haslayer(IP):
@@ -7,6 +20,11 @@ def process_packet(packet):
         ip_layer = packet[IP]
         dns_layer = packet[DNS]
         #get the layers extracted
+
+        if victim_ip and ip_layer.src != victim_ip and ip_layer.dst != victim_ip:
+            return
+        #same here again if victim is active
+        
 
         if dns_layer.qr == 0:
             #qr = 0 means query

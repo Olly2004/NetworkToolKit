@@ -100,6 +100,14 @@ def run_sniffer(output_box, batch=False):
         #build command to run packetsniffer.py
         if batch:
             cmd.append("--batch")
+            
+
+        if victim_only_mode.get() and current_target_ip:
+            #make sure curretn target is valid so this ONLY runs when spoofing is happening
+            cmd.append("--victim")
+            cmd.append(current_target_ip)
+            #putting this on all the sniffers for the victim only button
+
 
         proto_map = {"TCP": "6", "UDP": "17", "ICMP": "1", "ARP": "2054"}
         #map protocol names to numbers as packetsniffer.py expects numbers
@@ -157,6 +165,10 @@ def Run_SNI(output_box):
 
         cmd = ["python3", SNI_path]
 
+        if victim_only_mode.get() and current_target_ip:
+            cmd.append("--victim")
+            cmd.append(current_target_ip)
+
         process = subprocess.Popen(
             cmd, #command to run
             stdout=subprocess.PIPE, #capture output
@@ -198,6 +210,10 @@ def Run_DNS(output_box, iface):
 
         cmd = ["python3", DNS_path, iface]
         #iface is the second argument so [1] will access it
+
+        if victim_only_mode.get() and current_target_ip:
+            cmd.append("--victim")
+            cmd.append(current_target_ip)
 
         process = subprocess.Popen(
             cmd, #command to run
@@ -296,6 +312,10 @@ class MainApp(tk.Tk):
         self.title("NetworkToolKit")
         self.geometry("700x500")
 
+        global victim_only_mode
+        victim_only_mode = tk.BooleanVar(self)
+        #needed a route window before to attach to so you cant create the control variables on their own weird
+
         self.frames = {}
         #dictionary to hold all frames (sub-windows) of the app SO CLEVER
         #so techinally holding windows in a dictionary
@@ -373,6 +393,7 @@ class MainMenu(tk.Frame):
                 target_entry.pack(pady=5)
                 start_button.pack(pady=5)
                 stop_button.pack()
+                victim_only_button.pack()
                 #display if true
             else:
                 spoofed_label.pack_forget()
@@ -381,6 +402,7 @@ class MainMenu(tk.Frame):
                 target_entry.pack_forget()
                 start_button.pack_forget()
                 stop_button.pack_forget()
+                victim_only_button.forget()
                 #undisplay if not
 
         arp_var = tk.BooleanVar()
@@ -403,6 +425,8 @@ class MainMenu(tk.Frame):
 
         stop_button = tk.Button(self, text="Stop Spoofing", command= stop_spoof_func)
 
+        victim_only_button = tk.Checkbutton(self, text="Victim-Only Mode", variable=victim_only_mode)
+        #sets the booleanvar i made early to true or false depending as its a checkbutton
 
 
 

@@ -1,8 +1,19 @@
-from scapy.all import sniff, TCP, Raw
+from scapy.all import sniff, TCP, Raw, IP
 
 import struct
 
 import sys
+
+import argparse
+#same vibe as DNS
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--victim", help="Only capture SNI packets to/from this IP")
+args = parser.parse_args()
+#args now stores all arguments called when running SNI sniffer from GUI
+victim_ip = args.victim
+#one and only argument
+
 
 def extract_sni(packet):
 
@@ -171,6 +182,14 @@ def extract_sni(packet):
         return None
 
 def packet_callback(packet):
+
+    if victim_ip and packet.haslayer(IP):
+        src = packet[IP].src
+        dst = packet[IP].dst
+        if src != victim_ip and dst != victim_ip:
+            return
+        #checks the packet pre extraction to see if if flagged/argued???? to check if we care about the packet
+    
     sni = extract_sni(packet)
     #sni = server name
     if sni:
