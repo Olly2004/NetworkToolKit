@@ -320,7 +320,7 @@ class MainApp(tk.Tk):
         #dictionary to hold all frames (sub-windows) of the app SO CLEVER
         #so techinally holding windows in a dictionary
 
-        for page in (MainMenu, SnifferToolMenu, PacketSnifferGUI, DNSSnifferGUI, SNISnifferGUI):
+        for page in (MainMenu, SnifferToolMenu, ScannerMenu, PacketSnifferGUI, DNSSnifferGUI, SNISnifferGUI):
             frame = page(self)
             self.frames[page] = frame
             frame.pack(fill="both", expand=True)
@@ -380,8 +380,8 @@ class MainMenu(tk.Frame):
         tk.Button(self, text="Sniffers", width=20, height=2,
                   command=lambda: master.show_frame(SnifferToolMenu)).pack(pady=30)
 
-        tk.Button(self, text="Port Scanner", width=20, height=2,
-                  command=lambda: print("Port Scanner coming soon")).pack(pady=30)
+        tk.Button(self, text="Scanners", width=20, height=2,
+                  command=lambda: master.show_frame(ScannerMenu)).pack(pady=30)
 
 
 
@@ -449,6 +449,28 @@ class SnifferToolMenu(tk.Frame):
                   command=lambda: master.show_frame(DNSSnifferGUI)).pack(pady=10)
 
         tk.Button(self, text="SNI sniffer", width=20, height=2,
+                  command=lambda: master.show_frame(SNISnifferGUI)).pack(pady=10)
+
+        tk.Button(self, text="Back", command=lambda: master.show_frame(MainMenu)).pack(pady=5)
+
+
+
+
+class ScannerMenu(tk.Frame):
+    #new menu for scanner things copied and changed the old sniffer ofc
+    def __init__(self, master):
+        super().__init__(master)
+        
+
+        tk.Label(self, text="Choose a Tool", font=("Helvetica", 16, "bold")).pack(pady=20)
+
+        tk.Button(self, text="ARP scanner", width=20, height=2,
+                  command=lambda: master.show_frame(PacketSnifferGUI)).pack(pady=10)
+
+        tk.Button(self, text="soon", width=20, height=2,
+                  command=lambda: master.show_frame(DNSSnifferGUI)).pack(pady=10)
+
+        tk.Button(self, text="coming soon", width=20, height=2,
                   command=lambda: master.show_frame(SNISnifferGUI)).pack(pady=10)
 
         tk.Button(self, text="Back", command=lambda: master.show_frame(MainMenu)).pack(pady=5)
@@ -553,6 +575,8 @@ class SNISnifferGUI(tk.Frame):
         tk.Button(self, text="Back", command=lambda: master.show_frame(SnifferToolMenu)).pack(pady=5)
 
         tk.Button(btn_frame, text="Stop Sniffing", command=stop_sni_sniffer_func).pack(side=tk.LEFT, padx=10)
+
+
 
 
 
