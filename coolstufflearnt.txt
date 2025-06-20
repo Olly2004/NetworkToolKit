@@ -1,0 +1,12 @@
+ok apparently you can add yourself to the router without it knowing you are there
+
+so instead of DCHP assigning you an IP address therefore router being involved and logging you
+you can join adn assign urself a static IP and stuff
+so its like crashing a house party
+
+normally you knock (DHCP request)
+the host (router) woudl let me in and remember im here and stuff (MAC/IP/time)
+i then sit somewhere (get assigned an IP) therefore im officially on teh lease log
+
+first issue i see tho is if im assiging my own IP what if someone joins and DHCP assigns that same IP would there just be errors
+errors such as sending packets to one or the other
