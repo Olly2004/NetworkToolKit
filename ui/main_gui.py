@@ -276,7 +276,7 @@ def RUN_ARPScanner(output_box):
         ARPscan_path = os.path.join(os.path.dirname(__file__), "..", "Scanner", "ARPScanner.py")
 
         cmd = ["python3", ARPscan_path]
-            #iface is the second argument so [1] will access it
+            #no arguments for this so far
 
 
         process = subprocess.Popen(
