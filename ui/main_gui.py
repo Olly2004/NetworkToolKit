@@ -472,6 +472,10 @@ class MainMenu(tk.Frame):
         #sets the booleanvar i made early to true or false depending as its a checkbutton
 
 
+        spoof_all_button = tk.Button(self, text="spoof all", command = lambda: start_spoofer())
+        unspoof_all_button = tk.Button(self, text="unspoof all", command = lambda: start_spoofer())
+
+
 
 
 

