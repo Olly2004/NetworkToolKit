@@ -67,3 +67,30 @@ BUT FIRST I want to add a button make my sniffers only show spoofed packets (if 
 
 
 
+
+
+ok brainstorming
+
+phone replies to spoof as its an ARP REPLY not request as it is expecting a reply soon saying where the router is periodically
+
+WHEREAS It has no reason to accept a request
+
+SO
+what if i send ARP REPLIES to everyone with some random info but then an instruction at the end something like 
+"whats your MAC address"
+read up on it and because its a reply i dont think i cna add instructions as such as im supplying info and unless they act on it it ends there
+
+ok then new idea is surely iphone trusts the router so just simply spoof being the router and THEN send requests?
+
+OKOK NO i just realised i have a spoofing tool
+
+caveat or whatever is i need to spoof the iphone i want to locate to locate it??
+
+so i alreayd need to know the IP of my phone to then spoof it to then be able to see it on the ARP scanner SO NEW IDEA
+
+MAKE THE SPOOFER BETTER make it spoof the whole network? therefore then run the scanner and since everyone thinks im the router and everyone trusts the router i get everyones IP???
+
+
+anoter new idea is since if you go into my phone/router logs you will see im catching my phones traffic and sending it to the phone
+but why dont i catch it then send it back to the router to then resume sending???
+
