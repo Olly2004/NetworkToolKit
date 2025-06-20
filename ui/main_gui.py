@@ -30,7 +30,8 @@ stop_packet_sniffer = threading.Event()
 stop_sni_sniffer = threading.Event()
 stop_dns_sniffer = threading.Event()
 stop_spoofer = threading.Event()
-#make one for CURRENT QUAD
+stop_ARP_Scanner = threading.Event()
+#make one for CURRENT QUINTUPLE???
 #this is and object used for stopping the things
 
 #threading.event makes a shared on/off flag for threads
@@ -50,6 +51,9 @@ def stop_dns_sniffer_func():
     stop_dns_sniffer.set()
 
     #this will stop all threads so id have to make seperate fucntions for each thread being used
+
+def stop_ARP_Scanner_func():
+    stop_ARP_Scanner.set()
 
 
 
@@ -260,6 +264,45 @@ def start_spoofer(spoofed_entry, target_entry):
 
     
 
+def RUN_ARPScanner(output_box):
+
+    output_box.delete(1.0, tk.END)
+
+    stop_ARP_Scanner.clear()
+
+    def ARPscan_Task():
+        
+
+        ARPscan_path = os.path.join(os.path.dirname(__file__), "..", "Scanner", "ARPScanner.py")
+
+        cmd = ["python3", ARPscan_path]
+            #iface is the second argument so [1] will access it
+
+
+        process = subprocess.Popen(
+            cmd, #command to run
+            stdout=subprocess.PIPE, #capture output
+            stderr=subprocess.STDOUT, #captures errors too
+            text=True #string output instead of bytes
+        )
+
+
+        for line in process.stdout:
+                if stop_ARP_Scanner.is_set():
+                    output_box.insert(tk.END, "Stopping...\n")
+                    output_box.see(tk.END)
+                    process.terminate()
+                    #stop the thread/process if called
+                    break
+                output_box.insert(tk.END, line)
+                output_box.see(tk.END)
+                #insert line into output box and scroll to end auto
+
+    print("debug thread started")
+
+    threading.Thread(target=ARPscan_Task, daemon=True).start()
+
+    #ok i copied a lot of SNI/DNS functions but this is what i got and it should be fine tweaked it in necessary ways
 
 
 
@@ -320,7 +363,7 @@ class MainApp(tk.Tk):
         #dictionary to hold all frames (sub-windows) of the app SO CLEVER
         #so techinally holding windows in a dictionary
 
-        for page in (MainMenu, SnifferToolMenu, ScannerMenu, PacketSnifferGUI, DNSSnifferGUI, SNISnifferGUI):
+        for page in (MainMenu, SnifferToolMenu, ScannerMenu, PacketSnifferGUI, DNSSnifferGUI, SNISnifferGUI, ARPScannerGUI):
             frame = page(self)
             self.frames[page] = frame
             frame.pack(fill="both", expand=True)
@@ -465,13 +508,12 @@ class ScannerMenu(tk.Frame):
         tk.Label(self, text="Choose a Tool", font=("Helvetica", 16, "bold")).pack(pady=20)
 
         tk.Button(self, text="ARP scanner", width=20, height=2,
-                  command=lambda: master.show_frame(PacketSnifferGUI)).pack(pady=10)
+                  command=lambda: master.show_frame(ARPScannerGUI)).pack(pady=10)
 
-        tk.Button(self, text="soon", width=20, height=2,
-                  command=lambda: master.show_frame(DNSSnifferGUI)).pack(pady=10)
+        tk.Button(self, text="soon", width=20, height=2, command=lambda: print("not working")).pack(pady=10)
 
-        tk.Button(self, text="coming soon", width=20, height=2,
-                  command=lambda: master.show_frame(SNISnifferGUI)).pack(pady=10)
+
+        tk.Button(self, text="coming soon", width=20, height=2, command=lambda: print("not working")).pack(pady=10)
 
         tk.Button(self, text="Back", command=lambda: master.show_frame(MainMenu)).pack(pady=5)
 
@@ -577,7 +619,28 @@ class SNISnifferGUI(tk.Frame):
         tk.Button(btn_frame, text="Stop Sniffing", command=stop_sni_sniffer_func).pack(side=tk.LEFT, padx=10)
 
 
+class ARPScannerGUI(tk.Frame):
+    def __init__(self, master):
+        super().__init__(master)
 
+        title = tk.Label(self, text="ARP Scanner", font=("Helvetica", 16, "bold"))
+        title.pack(pady=10)
+
+        btn_frame = tk.Frame(self)
+        btn_frame.pack(pady=5)
+
+        self.output_box = ScrolledText(self, wrap=tk.WORD, font=("Courier", 10))
+        self.output_box.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+
+        SNI_btn = tk.Button(btn_frame, text="Run ARP Scanner",
+                                   command=lambda: RUN_ARPScanner(self.output_box))
+        #only need to pass the output box through will do this like the SNI one where the sniff function assumes main connection as the interface as its easier
+        SNI_btn.pack(side=tk.LEFT, padx=10)
+
+
+        tk.Button(self, text="Back", command=lambda: master.show_frame(ScannerMenu)).pack(pady=5)
+
+        tk.Button(btn_frame, text="Stop Scanning", command=stop_ARP_Scanner_func).pack(side=tk.LEFT, padx=10)
 
 
 
@@ -626,3 +689,19 @@ def ProtocolSelector(master):
 
     tk.Button(top, text="Confirm", command=save_and_close).pack(pady=5)
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+#GOOD LINKS
+
+#https://www.tutorialspoint.com/python/tk_button.htm
