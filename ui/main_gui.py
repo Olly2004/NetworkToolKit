@@ -101,10 +101,12 @@ def start_spoof_all(spoofed_ip="192.168.1.1"):
 
 def restore_all(spoofed_ip="192.168.1.1"):
 
+
     def run_restore():
         global spoof_process
         if spoof_process:
             spoof_process.terminate()
+            print("terminated")
             spoof_process = None
 
         spoof_path = os.path.join(os.path.dirname(__file__), "..", "spoofing", "spoofer.py")

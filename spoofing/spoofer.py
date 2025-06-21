@@ -3,35 +3,89 @@ import time
 import argparse
 from scapy.all import ARP, Ether, srp1, sendp, get_if_hwaddr, srp
 
+import threading
+#adding this for brute forcing
+
 iface = "wlp2s0"  # change if needed
 
 
+#OK NEW IDEA DO THE RESTORE LIKE IVE BEEN SPOOFING
+#BUT only send for a short duration instead of potentially forever
+def brute_force_restore_all(spoofed_ip):
+
+    duration = 5
+
+    spoofed_mac = get_mac(spoofed_ip)
+    #router mac
 
 
-def scan_active_hosts(subnet_prefix):
-    #subnet netprecx is gonna be MOST LIKELY 192.168.1.
-    #as it was cleverly made pre call
+    if not spoofed_mac:
+        print(f"failed to get MAC for {spoofed_ip}")
+        return
 
-    active_hosts = []
+    print(f"brute-forcing restore for all devices on subnet as {spoofed_ip} for {duration} seconds...")
 
-    for i in range(2, 255):  
-        #1 to 254 (skip .0 and .255) as range is exclusive of outer??
+    subnet_prefix = '.'.join(spoofed_ip.split('.')[:3]) + '.'
+    #same logic so 192.168.1.
 
+    stop_time = time.time() + duration
+    #so when we reach 5 seconds from now end it
+
+
+
+    def restore_loop(ip):
+        mac = get_mac(ip)
+        #get the mac of the threads IP
+        while time.time() < stop_time:
+            if mac:
+                restore_arp(ip, mac, spoofed_ip, spoofed_mac)
+            time.sleep(1)
+            #sleeping means giving up the GIL therefore another thread can run
+            #after hte 1 second shouldnt interrupt but instead go back in the queeu
+
+
+    threads = []
+
+    for i in range(2, 255):
         ip = subnet_prefix + str(i)
+        #get full IP from concatenation
 
-        arp = ARP(pdst=ip)
-        ether = Ether(dst="ff:ff:ff:ff:ff:ff")
-        packet = ether / arp
-        #create the frame and send it
+        if ip == spoofed_ip:
+            continue
+            #skpi router
 
-        answered, _ = srp(packet, timeout=1, verbose=False)
-        #talked through this logic before
+        t = threading.Thread(target=restore_loop, args=(ip,))
+        #ip, to make a tuple
 
-        for _, rcv in answered:
-            active_hosts.append((rcv.psrc, rcv[Ether].src))
-            #and this logic talked before
+        #we create a thread per IP (~250 threads)
+        #we are NOT running all 250 threads at the exact same time.
 
-    return active_hosts
+        #python has something called the GIL (Global Interpreter Lock).
+        #this means:
+        # - only one thread runs Python bytecode at a time.
+        # - so CPU-bound code doesn't run in parallel
+
+        #BUT in this case (restore_arp and getmac) we're doing network I/O and sleep calls:
+        # - sendp(pkt) is I/O-bound (sending network packets)
+        # - time.sleep(2) pauses the thread (releases the GIL)
+
+        #so while one thread sleeps or waits on I/O,
+        #another thread can run — concurrency, not true parallelism.
+
+        #CPU-bound = tasks that use the processor a lot (math, compression, etc.)
+        #I/O-bound = tasks that wait for something external (network, disk, input)
+
+
+        t.start()
+        #starts each
+
+        threads.append(t)
+        #adds them to the list so we know when all are done
+
+    for t in threads:
+        t.join()
+
+    print("restore all complete")
 
 
 
@@ -42,7 +96,6 @@ def get_mac(ip):
     #send ARP out asking to all whos IP this is and get their MAC
 
 def restore_arp(target_ip, target_mac, spoofed_ip, spoofed_mac):
-    print("[*] Restoring ARP tables...")
     #so my phone doesnt have to wait ages to restore its own tables
     #ofc assuming im not forwarding
     pkt = Ether(dst=target_mac) / ARP(
@@ -166,27 +219,13 @@ if __name__ == "__main__":
 
 
     elif args.restore_all:
+        #running thsi simpler and more brute forcy like my spoofer as this wasnt great before not all things were responding to the ARP requests for scan live hosts
+        #now ill just brute force it
         if not args.spoofed_ip:
             print("Usage: python3 spoofer.py --restore-all <spoofed_ip>")
-            #usage message on how to correctly do it
             sys.exit(1)
-        spoofed_mac = get_mac(args.spoofed_ip)
-        #get router MAC
-        subnet_prefix = '.'.join(args.spoofed_ip.split('.')[:3]) + '.'
-        #so uses . as the seperator therefore splits 1.1.1.1 into 192, 168, 1, 1
-        #then grabs the first 3 so 192, 168, 1
-        #then joins them with . again so now its 192.168.1
-        #THEN puts a dot at the end so now its 192.168.1. like we want 
+        brute_force_restore_all(args.spoofed_ip)
 
-        active_hosts = scan_active_hosts(subnet_prefix)
-
-        print(f"[+] Restoring {len(active_hosts)} devices...")
-        for ip, mac in active_hosts:
-            if ip == args.spoofed_ip:
-                #so it doesnt send it to the router although ive already taken precaution with 2-254 not 1
-                continue
-            restore_arp(ip, mac, args.spoofed_ip, spoofed_mac)
-            #then calls restore for EACH ip,mac combo
 
 
     elif args.all:
