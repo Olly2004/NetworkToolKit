@@ -20,6 +20,7 @@ selected = []
 
 spoof_process = None
 #THIS TRACKS THE SPOOF
+#it will hold processes running inside of it adn then stop spoof then terminates whatever is held in here
 
 current_spoofed_ip = None
 current_target_ip = None
@@ -29,9 +30,8 @@ current_target_ip = None
 stop_packet_sniffer = threading.Event()
 stop_sni_sniffer = threading.Event()
 stop_dns_sniffer = threading.Event()
-stop_spoofer = threading.Event()
 stop_ARP_Scanner = threading.Event()
-#make one for CURRENT QUINTUPLE???
+#make one for CURRENT back to quad???
 #this is and object used for stopping the things
 
 #threading.event makes a shared on/off flag for threads
@@ -59,8 +59,7 @@ def stop_ARP_Scanner_func():
 
 def stop_spoof_func():
     global spoof_process
-    stop_spoofer.set()
-    #sets the threading event from above
+    #get access
 
     if spoof_process:
         spoof_process.terminate()
@@ -68,13 +67,52 @@ def stop_spoof_func():
         #if its running terminate it
 
     if current_spoofed_ip and current_target_ip:
-        #only do it if have both IPs are valid 
+        #only do it if have both IPs are valid/meaning its running
+
         spoof_path = os.path.join(os.path.dirname(__file__), "..", "spoofing", "spoofer.py")
         subprocess.run([
             "python3", spoof_path, "--restore",
             current_spoofed_ip, current_target_ip
         ])
         #run it with the restoreing args so router IP 
+
+
+def start_spoof_all(spoofed_ip="192.168.1.1"):
+    def all_spoof_run():
+        global spoof_process
+
+        if spoof_process:
+            spoof_process.terminate()
+            spoof_process = None
+            #therefore 2 spoofs cant run at hte same time
+            #otherwise spoof_process will hold the new spoof and cant terminate the old its still running
+
+
+        spoof_path = os.path.join(os.path.dirname(__file__), "..", "spoofing", "spoofer.py")
+        spoof_process = subprocess.Popen(["python3", spoof_path, spoofed_ip, "--all"])
+        #this just runs
+        #python3 ../spoofing/spoofer.py <spoofed_ip> --all
+        #spoof process stores it
+
+    threading.Thread(target=all_spoof_run).start()
+    #make it threaded like the rest
+
+
+
+def restore_all(spoofed_ip="192.168.1.1"):
+
+    def run_restore():
+        global spoof_process
+        if spoof_process:
+            spoof_process.terminate()
+            spoof_process = None
+
+        spoof_path = os.path.join(os.path.dirname(__file__), "..", "spoofing", "spoofer.py")
+        subprocess.run(["python3", spoof_path, spoofed_ip, "--restore-all"])
+
+    threading.Thread(target=run_restore).start()
+
+
 
 
     
@@ -250,7 +288,12 @@ def start_spoofer(spoofed_entry, target_entry):
 
     spoofed_ip = spoofed_entry.get()
     target_ip = target_entry.get()
-    #get the arguemnts and pass
+    #get what was typed in the entries
+
+    if spoof_process:
+        spoof_process.terminate()
+        spoof_process = None
+        #same as spoof all logic here
 
     if spoofed_ip and target_ip:
         current_spoofed_ip = spoofed_ip
@@ -437,6 +480,8 @@ class MainMenu(tk.Frame):
                 start_button.pack(pady=5)
                 stop_button.pack()
                 victim_only_button.pack()
+                spoof_all_button.pack()
+                unspoof_all_button.pack()
                 #display if true
             else:
                 spoofed_label.pack_forget()
@@ -446,6 +491,8 @@ class MainMenu(tk.Frame):
                 start_button.pack_forget()
                 stop_button.pack_forget()
                 victim_only_button.forget()
+                spoof_all_button.forget()
+                unspoof_all_button.forget()
                 #undisplay if not
 
         arp_var = tk.BooleanVar()
@@ -472,8 +519,10 @@ class MainMenu(tk.Frame):
         #sets the booleanvar i made early to true or false depending as its a checkbutton
 
 
-        spoof_all_button = tk.Button(self, text="spoof all", command = lambda: start_spoofer())
-        unspoof_all_button = tk.Button(self, text="unspoof all", command = lambda: start_spoofer())
+        spoof_all_button = tk.Button(self, text="Spoof All Devices", command=lambda: start_spoof_all())
+
+        unspoof_all_button = tk.Button(self, text="Restore All Devices", command=lambda: restore_all())
+
 
 
 
