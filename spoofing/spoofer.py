@@ -13,7 +13,7 @@ iface = "wlp2s0"  # change if needed
 #BUT only send for a short duration instead of potentially forever
 def brute_force_restore_all(spoofed_ip):
 
-    duration = 5
+    duration = 10
 
     spoofed_mac = get_mac(spoofed_ip)
     #router mac
