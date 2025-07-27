@@ -1,6 +1,7 @@
 from scapy.all import ARP, Ether, srp
 import sys
 import time, random
+import os
 
 subnet = "192.168.1.0/24"
 iface = "wlp2s0"  # set interface explicitly
@@ -37,15 +38,34 @@ for _ in range(3):
     time.sleep(random.uniform(0.5, 1.0))
     #sleep between rounds to avoid spamming (and help other devices respond)
 
+
+
+#and get current script director
+script_dir = os.path.dirname(os.path.abspath(__file__))
+oui_path = os.path.join(script_dir, "oui.txt")
+
+#load the OUI database into a dict
+vendor_lookup = {}
+try:
+    with open(oui_path, "r", encoding="utf-8", errors="ignore") as f:
+        for line in f:
+            if "(hex)" in line:
+                parts = line.strip().split("\t")
+                if len(parts) >= 2:
+                    prefix = parts[0].replace("-", ":").lower()
+                    name = parts[-1].strip()
+                    vendor_lookup[prefix[:8]] = name
+except FileNotFoundError:
+    pass
+
 #once done, display all hosts
 print("Hosts found:\n")
 for ip, mac in hosts.items():
-    print(f"{ip} - {mac}")
+    prefix = mac.lower()[:8]
+    vendor = vendor_lookup.get(prefix, "Unknown")
+    print(f"{ip} - {mac} - {vendor}")
     #get the IPs and MACs and print them
 sys.stdout.flush()
 
 print(f"\nTotal: {len(hosts)} live host(s) detected.\n")
 sys.stdout.flush()
-
-
-#
