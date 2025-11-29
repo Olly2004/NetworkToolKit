@@ -45,7 +45,32 @@ It provides real-time packet capture, analysis, filtering, DNS/SNI inspection, a
 
 ## Installation
 
-```bash
+``` bash
 git clone https://github.com/Olly2004/NetworkToolKit
 cd NetworkToolKit
 pip install -r requirements.txt
+```
+Legal & Ethical Use
+
+This toolkit is strictly for educational, research, and defensive purposes
+dont use it on networks or devices you dont own or have explicit written permission to test.
+
+Roadmap (Planned Features)
+
+PCAP visualisation graphs
+Traffic volume/IP activity charts
+Alerts for ARP poisoning or duplicate MACs
+Basic anomaly detection (e.g., port scans, DNS entropy)
+GUI redesign + dark mode
+
+Why I Built This
+
+I made NetworkToolKit to deepen my understanding of:
+packet structure
+protocol behaviour
+network reconnaissance
+traffic analysis
+ARP vulnerabilities
+how SOC tools analyse and detect threats
+
+It’s helped me build practical skills for network security and threat detection, which is the career path I’m aiming toward.
