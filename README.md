@@ -1,37 +1,51 @@
-# NetworkToolKit
-Cybersecurity + networking toolkit: includes live packet sniffing, port scanning, and ARP spoofing/detection. Built in Python with real-time analysis and graphs.
+#NetworkToolKit
+A lightweight Python toolkit for packet sniffing, protocol analysis, and ARP-based network security testing.
 
+NetworkToolKit is a GUI-based networking and cybersecurity toolkit built with **Python**, **Tkinter**, and **Scapy**.  
+It provides real-time packet capture, analysis, filtering, DNS/SNI inspection, and ARP spoofing/detection features — designed for learning, testing, and exploring network behaviour in controlled environments.
 
-ok refreshed current new readme AGAIN
+---
 
-where we at
+## Features
 
-run with
-sudo python3 main.py
+### **Real Time Packet Sniffer**
+- Capture live network traffic using Scapy  
+- Protocol filtering (TCP, UDP, ICMP, ARP, or ALL)
+- Victim-only mode (filter packets by source/destination IP)
+- Batch/offline mode for analysing `.pcap` files
+- Real-time streaming into a GUI console
 
-CURRENT FEATURES:
+### **DNS & SNI Sniffers**
+- Extract DNS queries and responses  
+- Extract TLS SNI (Server Name Indication) fields  
+- Useful for visibility into encrypted and unencrypted traffic patterns  
 
-Live Packet Sniffer – capture and display all traffic (supports protocol filters)
+### **ARP Tools**
+- ARP spoofing module (with automatic ARP restoration)
+- Detect suspicious ARP responses  
+- Helpful for demonstrating MITM techniques in test environments  
+- Includes safeguards & warnings to prevent misuse
 
-DNS Sniffer – extract domain requests in real-time
+### **GUI**
+- Built with Tkinter  
+- Multi-page layout (packet sniffer, DNS/SNI tools, ARP tools)  
+- Threaded subprocess system to keep UI responsive  
+- Supports interface selection and background process control
 
-SNI Sniffer – capture Server Name Indication (SNI)
+---
 
-ARP Spoofer – impersonate the router and intercept devices
+## Things Used
+- **Python 3**
+- **Scapy**
+- **Tkinter**
+- **Threading & Subprocess**
+- **Linux networking utilities (iptables, sysctl)**
 
-Spoof All Mode – spam all devices on the subnet with "I'm the router" ARP replies
+---
 
-Brute Force Restore – flood all devices with correct ARP replies to undo spoofing for a duration (currnetly 10 seconds)
+## Installation
 
-Victim-Only Mode – filter sniffer output to a selected target device
-
-ARP Scanner – basic scan for active hosts (uses ARP requests therefore not always great and devices need to be powered on e.g. my phone)
-
-
-TODO:
-
-clean up the GUI make it more spaced/fluid maybe some colour type thing
-
-clean up code its pretty modular and im proud of it but ive changed a lot of things and learnt a lot so read through code nad add new notes/deleted old logic if it remains
-
-THEN i want to make a fake temporary MAC for this laptop to confuse the router (sort of)
+```bash
+git clone https://github.com/Olly2004/NetworkToolKit
+cd NetworkToolKit
+pip install -r requirements.txt
