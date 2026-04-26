@@ -3,8 +3,18 @@ import sys
 import time, random
 import os
 
-subnet = "192.168.1.0/24"
-iface = "wlp2s0"  # set interface explicitly
+
+
+import argparse
+parser = argparse.ArgumentParser()
+parser.add_argument("--iface", default="eth1", help="Network interface")
+parser.add_argument("--subnet", default="192.168.56.0/24", help="Subnet to scan")
+args = parser.parse_args()
+
+subnet = args.subnet
+iface = args.iface
+#works better
+
 
 print(f"Starting ARP scan on {subnet}...\n")
 sys.stdout.flush()

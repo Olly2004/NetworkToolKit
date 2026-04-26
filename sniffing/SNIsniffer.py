@@ -9,10 +9,11 @@ import argparse
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--victim", help="Only capture SNI packets to/from this IP")
+parser.add_argument("--iface", default="eth1", help="Interface to sniff on")
 args = parser.parse_args()
-#args now stores all arguments called when running SNI sniffer from GUI
 victim_ip = args.victim
-#one and only argument
+iface = args.iface
+#much cleaner
 
 
 def extract_sni(packet):
@@ -199,13 +200,9 @@ def packet_callback(packet):
 
 
 
-sniff(filter="tcp port 443", prn=packet_callback, store=False)    
+sniff(filter="tcp port 443", iface=iface, prn=packet_callback, store=False)
 #port 443 is default port for HTTPS which uses TLS
 
-#sniff(filter="tcp port 80", prn=packet_callback, store=False)  
-#whereas port 80 is HTTP NO s 
-#ofc my current code wont work for this as differnt structures but i plan on doing this as
-#itll be easy anyway
 
 print("SNISniffer started")
 
