@@ -11,6 +11,10 @@ DEFAULT_IFACE = "eth1"
 DEFAULT_SUBNET = "192.168.56.0/24"
 #DEFAULT_SUBNET = "192.168.0.0/24"
 
+ROOT = os.path.join(os.path.dirname(__file__), "..")
+os.makedirs(os.path.join(ROOT, "captures"), exist_ok=True)
+#make the captures folder if it doesnt exist
+
 #helper to build paths to scripts in other folders
 ROOT = os.path.join(os.path.dirname(__file__), "..")
 
@@ -101,7 +105,10 @@ def run_sniffer(output_box, batch=False):
         if selected_nums:
             cmd += ["--proto"] + selected_nums
         #ADD MORE PROTOS HERE
+        
+        cmd += ["--output", os.path.join(ROOT, "captures", "latest.pcap")]
 
+        cmd += ["--iface", DEFAULT_IFACE]
 
         run_tool(cmd, output_box, stop_packet_sniffer)
 
@@ -385,6 +392,7 @@ class PacketSnifferGUI(tk.Frame):
                   command=stop_packet_sniffer_func).pack(side=tk.LEFT, padx=5)
         tk.Button(btn_frame, text="Filters",
                   command=lambda: ProtocolSelector(self)).pack(side=tk.LEFT, padx=5)
+        tk.Label(btn_frame, text="Auto saves ot cpatures/latest.pcap", font=("Courier", 8)).pack(side=tk.LEFT, padx=5)
 
 
 class DNSSnifferGUI(tk.Frame):
