@@ -40,8 +40,6 @@ def process_packet(packet):
     sys.stdout.flush()
 
 
-#define iface first
-iface = sys.argv[1] if len(sys.argv) > 1 else "wlp2s0"
 
 print(f"Starting DNS sniffer on {iface}...")
 

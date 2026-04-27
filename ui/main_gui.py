@@ -15,9 +15,6 @@ ROOT = os.path.join(os.path.dirname(__file__), "..")
 os.makedirs(os.path.join(ROOT, "captures"), exist_ok=True)
 #make the captures folder if it doesnt exist
 
-#helper to build paths to scripts in other folders
-ROOT = os.path.join(os.path.dirname(__file__), "..")
-
 SCRIPT_LOCATIONS = {
     "packetsniffer.py": os.path.join(ROOT, "sniffing", "packetsniffer.py"),
     "DNSsniffer.py": os.path.join(ROOT, "sniffing", "DNSsniffer.py"),
@@ -95,17 +92,13 @@ def run_sniffer(output_box, batch=False):
         if batch:
             cmd.append("--batch")
 
-        #victim-only mode
-        if victim_only_mode.get() and current_target_ip:
-            cmd += ["--victim", current_target_ip]
-
         #protocol filter, GUI stores names, sniffer wants numbers
         proto_map = {"TCP": "6", "UDP": "17", "ICMP": "1", "ARP": "2054"}
         selected_nums = [proto_map[p] for p in selected if p in proto_map]
         if selected_nums:
             cmd += ["--proto"] + selected_nums
         #ADD MORE PROTOS HERE
-        
+
         cmd += ["--output", os.path.join(ROOT, "captures", "latest.pcap")]
 
         cmd += ["--iface", DEFAULT_IFACE]
@@ -122,10 +115,6 @@ def run_sni(output_box, iface):
 
     def task():
         cmd = ["python3", script("SNIsniffer.py"), "--iface", iface]
-        
-        if victim_only_mode.get() and current_target_ip:
-            cmd += ["--victim", current_target_ip]
-
         run_tool(cmd, output_box, stop_sni_sniffer)
 
     threading.Thread(target=task, daemon=True).start()
@@ -137,10 +126,6 @@ def run_dns(output_box, iface):
 
     def task():
         cmd = ["python3", script("DNSsniffer.py"), iface]
-
-        if victim_only_mode.get() and current_target_ip:
-            cmd += ["--victim", current_target_ip]
-
         run_tool(cmd, output_box, stop_dns_sniffer)
 
     threading.Thread(target=task, daemon=True).start()
@@ -169,7 +154,6 @@ def start_spoofer(spoofed_entry, target_entry):
 
     spoofed_ip = spoofed_entry.get()
     target_ip = target_entry.get()
-    #recovery
 
     #kill existing spoof before starting a new one
     if spoof_process:
@@ -180,7 +164,7 @@ def start_spoofer(spoofed_entry, target_entry):
         current_spoofed_ip = spoofed_ip
         current_target_ip  = target_ip
         spoof_process = subprocess.Popen(
-            ["python3", script("spoofer.py"), spoofed_ip, target_ip]
+            ["python3", script("spoofer.py"), spoofed_ip, target_ip, "--iface", DEFAULT_IFACE]
         )
 
 
@@ -195,29 +179,30 @@ def stop_spoof_func():
     if current_spoofed_ip and current_target_ip:
         subprocess.run([
             "python3", script("spoofer.py"),
-            "--restore", current_spoofed_ip, current_target_ip
+            "--restore", current_spoofed_ip, current_target_ip,
+            "--iface", DEFAULT_IFACE
         ])
 
 
-def start_spoof_all(spoofed_ip="192.168.1.1"):
+def start_spoof_all(spoofed_ip="192.168.56.1"):
     def task():
         global spoof_process
         if spoof_process:
             spoof_process.terminate()
             spoof_process = None
         spoof_process = subprocess.Popen(
-            ["python3", script("spoofer.py"), spoofed_ip, "--all"]
+            ["python3", script("spoofer.py"), spoofed_ip, "--all", "--iface", DEFAULT_IFACE]
         )
     threading.Thread(target=task).start()
 
 
-def restore_all(spoofed_ip="192.168.1.1"):
+def restore_all(spoofed_ip="192.168.56.1"):
     def task():
         global spoof_process
         if spoof_process:
             spoof_process.terminate()
             spoof_process = None
-        subprocess.run(["python3", script("spoofer.py"), spoofed_ip, "--restore-all"])
+        subprocess.run(["python3", script("spoofer.py"), spoofed_ip, "--restore-all", "--iface", DEFAULT_IFACE])
     threading.Thread(target=task).start()
 
 
@@ -238,10 +223,6 @@ class MainApp(tk.Tk):
         super().__init__()
         self.title("NetworkToolKit")
         self.geometry("700x500")
-
-        global victim_only_mode
-        victim_only_mode = tk.BooleanVar(self)
-        #booleanVar needs a root window to attach to, cant create it before this
 
         #build all pages upfront and stash them in a dict
         self.frames = {}
@@ -280,30 +261,25 @@ class MainMenu(tk.Frame):
 
         spoofed_label = tk.Label(self, text="Spoofed IP (pretend to be):")
         spoofed_entry = tk.Entry(self)
-        spoofed_entry.insert(0, "192.168.1.")
+        spoofed_entry.insert(0, "192.168.56.")
 
         target_label = tk.Label(self, text="Target IP (victim):")
         target_entry = tk.Entry(self)
-        target_entry.insert(0, "192.168.1.")
-
+        target_entry.insert(0, "192.168.56.")
 
         start_button = tk.Button(self, text="Start Spoofing",
-                                      command=lambda: start_spoofer(spoofed_entry, target_entry))
+                                    command=lambda: start_spoofer(spoofed_entry, target_entry))
         stop_button  = tk.Button(self, text="Stop Spoofing",
-                                      command=stop_spoof_func)
-        
-        victim_only_button = tk.Checkbutton(self, text="Victim-Only Mode",
-                                            variable=victim_only_mode)
-        
-        spoof_all_button = tk.Button(self, text="Spoof All Devices",
-                                      command=lambda: start_spoof_all())
-        unspoof_all_button = tk.Button(self, text="Restore All Devices",
-                                       command=lambda: restore_all())
+                                    command=stop_spoof_func)
 
+        spoof_all_button = tk.Button(self, text="Spoof All Devices",
+                                    command=lambda: start_spoof_all(spoofed_entry.get()))
+        unspoof_all_button = tk.Button(self, text="Restore All Devices",
+                                    command=lambda: restore_all(spoofed_entry.get()))
 
         spoof_widgets = [
             spoofed_label, spoofed_entry, target_label, target_entry,
-            start_button, stop_button, victim_only_button,
+            start_button, stop_button,
             spoof_all_button, unspoof_all_button
         ]
         #keeping them in a list means toggle is just a loop
@@ -331,6 +307,7 @@ class SnifferToolMenu(tk.Frame):
                   command=lambda: master.show_frame(PacketSnifferGUI)).pack(pady=10)
         tk.Button(self, text="DNS Sniffer", width=20, height=2,
                   command=lambda: master.show_frame(DNSSnifferGUI)).pack(pady=10)
+        
         tk.Button(self, text="SNI Sniffer", width=20, height=2,
                   command=lambda: master.show_frame(SNISnifferGUI)).pack(pady=10)
         tk.Button(self, text="Back",
@@ -347,6 +324,7 @@ class ScannerMenu(tk.Frame):
                   command=lambda: master.show_frame(ARPScannerGUI)).pack(pady=10)
         tk.Button(self, text="Soon", width=20, height=2,
                   command=lambda: print("not yet lol")).pack(pady=10)
+        
         tk.Button(self, text="Also Soon", width=20, height=2,
                   command=lambda: print("not yet lol")).pack(pady=10)
         tk.Button(self, text="Back",
@@ -356,7 +334,7 @@ class ScannerMenu(tk.Frame):
 
 
 #─── SHARED SNIFFER PAGE BUILDER ──────────────────────────────────────────────
-# PacketSnifferGUI, DNSSnifferGUI, SNISnifferGUI, ARPScannerGUI all have:
+#PacketSnifferGUI, DNSSnifferGUI, SNISnifferGUI, ARPScannerGUI all have:
 # - a title label
 # - a scrollable output box
 # - a button frame with run + stop + back
@@ -388,11 +366,12 @@ class PacketSnifferGUI(tk.Frame):
                   command=lambda: run_sniffer(self.output_box, batch=False)).pack(side=tk.LEFT, padx=5)
         tk.Button(btn_frame, text="Run (Batch)",
                   command=lambda: run_sniffer(self.output_box, batch=True)).pack(side=tk.LEFT, padx=5)
+        
         tk.Button(btn_frame, text="Stop",
                   command=stop_packet_sniffer_func).pack(side=tk.LEFT, padx=5)
         tk.Button(btn_frame, text="Filters",
                   command=lambda: ProtocolSelector(self)).pack(side=tk.LEFT, padx=5)
-        tk.Label(btn_frame, text="Auto saves ot cpatures/latest.pcap", font=("Courier", 8)).pack(side=tk.LEFT, padx=5)
+        tk.Label(btn_frame, text="Auto-saves to captures/latest.pcap", font=("Courier", 8)).pack(side=tk.LEFT, padx=5)
 
 
 class DNSSnifferGUI(tk.Frame):
