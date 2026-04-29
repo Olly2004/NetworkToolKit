@@ -1,3 +1,25 @@
 ubuntu:
 - watch -n 1 ip neigh
 
+NEWEST commit news: i will NOT remmebe to change this
+
+1. detection tool (ARPdection) watches the network passively, spots the spoof (cuz its broadcasted)
+and write a JSON alert to captures/alerts.json on kali
+
+2. splunk universal forwarder - splunk agent that watches files and ships them where i want
+installed it on my kali to watch alerts.json and told it to send anything to splunk at ip:9997
+
+3. splunk enterprise - configured it to the port FOR INCOMING data forwarders
+when forwarded splunk indexes it meaning it parses the json extracts all fields, timestamps it and makes it searchable
+
+4. result when tool makes alert within seconds SHOULD BE on my splunk fully parsed and queryable
+
+SO THE DATA FLOW IS:
+
+ARP spoof happens
+    .py detects it
+        write to alerts.json
+            forwarder ships to splunk vm on port 9997
+                splunk indexes and parses it
+                    appears in search UI
+AWESOME thats it i believe so far

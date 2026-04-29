@@ -1,0 +1,8 @@
+{"timestamp": "2026-04-27 15:08:57", "alert": "NEW_DEVICE_DETECTED", "ip": "192.168.56.10", "mac": "08:00:27:1e:cd:f7", "message": "New device appeared: 192.168.56.10 (08:00:27:1e:cd:f7)"}
+{"timestamp": "2026-04-27 15:08:57", "alert": "NEW_DEVICE_DETECTED", "ip": "192.168.56.20", "mac": "08:00:27:3b:b6:bd", "message": "New device appeared: 192.168.56.20 (08:00:27:3b:b6:bd)"}
+{"timestamp": "2026-04-27 15:08:57", "alert": "ARP_SPOOF_DETECTED", "ip": "192.168.56.20", "expected_mac": "08:00:27:3b:b6:bd", "seen_mac": "08:00:27:d9:6a:7d", "message": "IP 192.168.56.20 changed MAC \u2014 possible ARP spoofing"}
+{"timestamp": "2026-04-27 15:13:27", "alert": "ARP_SPOOF_DETECTED", "ip": "192.168.56.20", "expected_mac": "08:00:27:d9:6a:7d", "seen_mac": "08:00:27:3b:b6:bd", "message": "IP 192.168.56.20 changed MAC \u2014 possible ARP spoofing"}
+{"timestamp": "2026-04-27 15:13:38", "alert": "ARP_SPOOF_DETECTED", "ip": "192.168.56.20", "expected_mac": "08:00:27:3b:b6:bd", "seen_mac": "08:00:27:d9:6a:7d", "message": "IP 192.168.56.20 changed MAC \u2014 possible ARP spoofing"}
+{"timestamp": "2026-04-27 15:13:42", "alert": "ARP_SPOOF_DETECTED", "ip": "192.168.56.20", "expected_mac": "08:00:27:d9:6a:7d", "seen_mac": "08:00:27:3b:b6:bd", "message": "IP 192.168.56.20 changed MAC \u2014 possible ARP spoofing"}
+{"timestamp": "2026-04-27 15:13:45", "alert": "ARP_SPOOF_DETECTED", "ip": "192.168.56.20", "expected_mac": "08:00:27:3b:b6:bd", "seen_mac": "08:00:27:d9:6a:7d", "message": "IP 192.168.56.20 changed MAC \u2014 possible ARP spoofing"}
+{"timestamp": "2026-04-27 15:13:49", "alert": "ARP_SPOOF_DETECTED", "ip": "192.168.56.20", "expected_mac": "08:00:27:d9:6a:7d", "seen_mac": "08:00:27:3b:b6:bd", "message": "IP 192.168.56.20 changed MAC \u2014 possible ARP spoofing"}

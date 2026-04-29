@@ -21,6 +21,7 @@ SCRIPT_LOCATIONS = {
     "SNIsniffer.py": os.path.join(ROOT, "sniffing", "SNIsniffer.py"),
     "spoofer.py": os.path.join(ROOT, "spoofing", "spoofer.py"),
     "ARPScanner.py": os.path.join(ROOT, "Scanner",  "ARPScanner.py"),
+    "ARPDetector.py": os.path.join(ROOT, "Scanner", "ARPDetector.py"),
 }
 
 def script(name):
@@ -45,6 +46,7 @@ stop_packet_sniffer = threading.Event()
 stop_sni_sniffer = threading.Event()
 stop_dns_sniffer = threading.Event()
 stop_arp_scanner = threading.Event()
+stop_arp_detector = threading.Event()
 
 
 
@@ -54,6 +56,7 @@ def stop_packet_sniffer_func(): stop_packet_sniffer.set()
 def stop_sni_sniffer_func(): stop_sni_sniffer.set()
 def stop_dns_sniffer_func(): stop_dns_sniffer.set()
 def stop_arp_scanner_func(): stop_arp_scanner.set()
+def stop_arp_detector_func(): stop_arp_detector.set()
 
 
 
@@ -145,6 +148,21 @@ def run_arp_scanner(output_box):
     threading.Thread(target=task, daemon=True).start()
 
 
+def run_arp_detector(output_box):
+    stop_arp_detector.clear()
+    output_box.delete(1.0, tk.END)
+
+    def task():
+        cmd = ["python3", script("ARPDetector.py"),
+               "--iface", DEFAULT_IFACE,
+               "--subnet", DEFAULT_SUBNET,
+               "--output", os.path.join(ROOT, "captures", "alerts.json")]
+        run_tool(cmd, output_box, stop_arp_detector)
+
+    threading.Thread(target=task, daemon=True).start()
+    #keeping it all modular looks nice i think at least
+
+
 
 
 #─── SPOOFER FUNCTIONS ────────────────────────────────────────────────────────
@@ -227,7 +245,8 @@ class MainApp(tk.Tk):
         #build all pages upfront and stash them in a dict
         self.frames = {}
         for page in (MainMenu, SnifferToolMenu, ScannerMenu,
-                     PacketSnifferGUI, DNSSnifferGUI, SNISnifferGUI, ARPScannerGUI):
+                     PacketSnifferGUI, DNSSnifferGUI, SNISnifferGUI,
+                     ARPScannerGUI, ARPDetectorGUI):
             frame = page(self)
             self.frames[page] = frame
             frame.pack(fill="both", expand=True)
@@ -321,14 +340,14 @@ class ScannerMenu(tk.Frame):
         tk.Label(self, text="Choose a Scanner", font=("Helvetica", 16, "bold")).pack(pady=20)
 
         tk.Button(self, text="ARP Scanner", width=20, height=2,
-                  command=lambda: master.show_frame(ARPScannerGUI)).pack(pady=10)
-        tk.Button(self, text="Soon", width=20, height=2,
-                  command=lambda: print("not yet lol")).pack(pady=10)
+                    command=lambda: master.show_frame(ARPScannerGUI)).pack(pady=10)
+        tk.Button(self, text="ARP Detector", width=20, height=2,
+                    command=lambda: master.show_frame(ARPDetectorGUI)).pack(pady=10)
         
         tk.Button(self, text="Also Soon", width=20, height=2,
-                  command=lambda: print("not yet lol")).pack(pady=10)
+                    command=lambda: print("not yet lol")).pack(pady=10)
         tk.Button(self, text="Back",
-                  command=lambda: master.show_frame(MainMenu)).pack(pady=5)
+                    command=lambda: master.show_frame(MainMenu)).pack(pady=5)
         #same
 
 
@@ -427,6 +446,19 @@ class ARPScannerGUI(tk.Frame):
                   command=lambda: run_arp_scanner(self.output_box)).pack(side=tk.LEFT, padx=5)
         tk.Button(btn_frame, text="Stop",
                   command=stop_arp_scanner_func).pack(side=tk.LEFT, padx=5)
+        
+
+class ARPDetectorGUI(tk.Frame):
+    def __init__(self, master):
+        super().__init__(master)
+        btn_frame, self.output_box = _make_sniffer_page(
+            self, "ARP Detector", ScannerMenu, master
+        )
+        tk.Button(btn_frame, text="Start Detector",
+                  command=lambda: run_arp_detector(self.output_box)).pack(side=tk.LEFT, padx=5)
+        tk.Button(btn_frame, text="Stop",
+                  command=stop_arp_detector_func).pack(side=tk.LEFT, padx=5)
+        
         
 
 
