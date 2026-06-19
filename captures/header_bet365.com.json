@@ -1,0 +1,77 @@
+{
+  "timestamp": "2026-06-03 10:53:46",
+  "target": "https://bet365.com",
+  "status_code": 403,
+  "summary": {
+    "total": 8,
+    "passed": 4,
+    "warned": 1,
+    "missing": 3
+  },
+  "results": [
+    {
+      "header": "Strict-Transport-Security",
+      "abbr": "HSTS",
+      "status": "MISSING",
+      "value": null,
+      "detail": "Header not sent by server",
+      "why": "Forces HTTPS-only. Without it, SSL stripping attacks intercept the first HTTP requestbefore the browser upgrades. only ever kicks in AFTER the first HTTPS response"
+    },
+    {
+      "header": "Content-Security-Policy",
+      "abbr": "CSP",
+      "status": "WARN",
+      "value": "default-src 'none'; script-src 'nonce-C1Z4Cm9JDjeFOhU85Aoxa8' 'unsafe-eval' https://challenges.cloudflare.com; script-src-attr 'none'; style-src 'unsafe-inline'; img-src 'self' https://challenges.cloudflare.com; connect-src 'self' https://challenges.cloudflare.com; frame-src 'self' https://challenges.cloudflare.com blob:; child-src 'self' https://challenges.cloudflare.com blob:; worker-src blob:; form-action http: https:; base-uri 'self'",
+      "detail": "CSP contains 'unsafe-inline' which allows inline scripts \u2014 XSS risk remains",
+      "why": "Whitelists script sources \u2014 primary XSS defence. nsafe-inline defeats the whole point."
+    },
+    {
+      "header": "X-Frame-Options",
+      "abbr": "XFO",
+      "status": "PASS",
+      "value": "SAMEORIGIN",
+      "detail": "Set to SAMEORIGIN \u2014 clickjacking protection active",
+      "why": "Blocks your page being iframed on malicious sitesits like a mirage and prevents clickjacking."
+    },
+    {
+      "header": "X-Content-Type-Options",
+      "abbr": "XCTO",
+      "status": "PASS",
+      "value": "nosniff",
+      "detail": "Set to 'nosniff' \u2014 MIME sniffing disabled",
+      "why": "Stops browsers guessing file types. Prevents uploaded files being executed as scripts."
+    },
+    {
+      "header": "Referrer-Policy",
+      "abbr": "RP",
+      "status": "PASS",
+      "value": "same-origin",
+      "detail": "Restrictive policy set: 'same-origin'",
+      "why": "Controls what URL info leaks via the Referer header when users click outbound links.for example account13234/ being shown to the new site is where you came from"
+    },
+    {
+      "header": "Permissions-Policy",
+      "abbr": "PP",
+      "status": "PASS",
+      "value": "accelerometer=(),browsing-topics=(),camera=(),clipboard-read=(),clipboard-write=(),geolocation=(),gyroscope=(),hid=(),interest-cohort=(),magnetometer=(),microphone=(),payment=(),publickey-credentials-get=(),screen-wake-lock=(),serial=(),sync-xhr=(),usb=(),xr-spatial-tracking=(self)",
+      "detail": "Policy present \u2014 browser feature access is restricted",
+      "why": "Restricts browser APIs (camera, mic, geolocation) from third-party scripts."
+    },
+    {
+      "header": "X-XSS-Protection",
+      "abbr": "XXP",
+      "status": "MISSING",
+      "value": null,
+      "detail": "Header not sent by server",
+      "why": "Legacy filter \u2014 now deprecated and exploitable. Should be disabled; use CSP instead."
+    },
+    {
+      "header": "Cache-Control",
+      "abbr": "CC",
+      "status": "MISSING",
+      "value": null,
+      "detail": "Header not sent by server",
+      "why": "Controls caching.Authenticated pages shouldn't cache \u2014 risks data exposure on shared devices."
+    }
+  ]
+}

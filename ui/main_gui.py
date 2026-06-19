@@ -22,6 +22,7 @@ SCRIPT_LOCATIONS = {
     "spoofer.py": os.path.join(ROOT, "spoofing", "spoofer.py"),
     "ARPScanner.py": os.path.join(ROOT, "Scanner",  "ARPScanner.py"),
     "ARPDetector.py": os.path.join(ROOT, "Scanner", "ARPDetector.py"),
+    "http_header_checker.py": os.path.join(ROOT, "Scanner", "http_header_checker.py"),
 }
 
 def script(name):
@@ -47,6 +48,7 @@ stop_sni_sniffer = threading.Event()
 stop_dns_sniffer = threading.Event()
 stop_arp_scanner = threading.Event()
 stop_arp_detector = threading.Event()
+stop_http_checker = threading.Event()
 
 
 
@@ -57,6 +59,7 @@ def stop_sni_sniffer_func(): stop_sni_sniffer.set()
 def stop_dns_sniffer_func(): stop_dns_sniffer.set()
 def stop_arp_scanner_func(): stop_arp_scanner.set()
 def stop_arp_detector_func(): stop_arp_detector.set()
+def stop_http_checker_func(): stop_http_checker.set()
 
 
 
@@ -164,6 +167,41 @@ def run_arp_detector(output_box):
 
 
 
+def run_http_checker(output_box, url, save_report=False):
+    #ofc pass the url throguh
+    
+    #runs http.py as subprocess ofc like theothers
+    #url - the target URL from the entry field
+    #save_report - if true passes --output flag to save a JSON report
+
+    stop_http_checker.clear()
+    output_box.delete(1.0, tk.END)
+    #clear
+
+    if not url.strip():
+        output_box.insert(tk.END, "Enter a URL first.\n")
+        return
+    #strip op removes leading or trailing whitespace
+    #added not to make it true since empty string in python is falsy
+
+    def task():
+        cmd = ["python3", script("http_header_checker.py"), url]
+
+        if save_report:
+            from urllib.parse import urlparse
+            from datetime import datetime
+            hostname = urlparse(url).hostname or "unknown"
+            #urlparse so i dont have to remove https... and .com was easier
+            report_path = os.path.join(ROOT, "captures", f"header_{hostname}.json")
+            cmd += ["--output", report_path]
+
+        run_tool(cmd, output_box, stop_http_checker)
+        #stopchecekr is polling to see if it becomes true
+        
+
+    threading.Thread(target=task, daemon=True).start()
+
+
 
 #─── SPOOFER FUNCTIONS ────────────────────────────────────────────────────────
 
@@ -246,7 +284,7 @@ class MainApp(tk.Tk):
         self.frames = {}
         for page in (MainMenu, SnifferToolMenu, ScannerMenu,
                      PacketSnifferGUI, DNSSnifferGUI, SNISnifferGUI,
-                     ARPScannerGUI, ARPDetectorGUI):
+                     ARPScannerGUI, ARPDetectorGUI, HTTPHeaderCheckerGUI):
             frame = page(self)
             self.frames[page] = frame
             frame.pack(fill="both", expand=True)
@@ -344,11 +382,14 @@ class ScannerMenu(tk.Frame):
         tk.Button(self, text="ARP Detector", width=20, height=2,
                     command=lambda: master.show_frame(ARPDetectorGUI)).pack(pady=10)
         
-        tk.Button(self, text="Also Soon", width=20, height=2,
-                    command=lambda: print("not yet lol")).pack(pady=10)
+        tk.Button(self, text="HTTP Header Checker", width=20, height=2,
+            command=lambda: master.show_frame(HTTPHeaderCheckerGUI)).pack(pady=10)
+        
+
         tk.Button(self, text="Back",
                     command=lambda: master.show_frame(MainMenu)).pack(pady=5)
         #same
+        
 
 
 
@@ -459,6 +500,31 @@ class ARPDetectorGUI(tk.Frame):
         tk.Button(btn_frame, text="Stop",
                   command=stop_arp_detector_func).pack(side=tk.LEFT, padx=5)
         
+
+class HTTPHeaderCheckerGUI(tk.Frame):
+    def __init__(self, master):
+        super().__init__(master)
+        btn_frame, self.output_box = _make_sniffer_page(
+            self, "HTTP Header Checker", ScannerMenu, master
+        )
+        #new instance
+
+        #URL input — only extra thing this tool needs
+        url_frame = tk.Frame(self)
+        url_frame.pack(pady=3)
+        tk.Label(url_frame, text="URL:").pack(side=tk.LEFT)
+        self.url_entry = tk.Entry(url_frame, width=45)
+        self.url_entry.insert(0, "https://")
+        # predone
+        self.url_entry.pack(side=tk.LEFT, padx=4)
+
+        tk.Button(btn_frame, text="Analyse",
+                  command=lambda: run_http_checker(self.output_box, self.url_entry.get())).pack(side=tk.LEFT, padx=5)
+        tk.Button(btn_frame, text="Analyse + Save",
+                  command=lambda: run_http_checker(self.output_box, self.url_entry.get(), save_report=True)).pack(side=tk.LEFT, padx=5)
+        #save report true
+        tk.Button(btn_frame, text="Stop",
+                  command=stop_http_checker_func).pack(side=tk.LEFT, padx=5)
         
 
 
